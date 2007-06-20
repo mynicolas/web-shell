@@ -1,0 +1,87 @@
+body {
+background-color: #000;
+margin:0;
+padding:0;
+}
+#term {
+float:left;
+}
+
+#uiarea {
+width:480px;
+}
+#textpad {
+padding:8px 0 0 0;
+}
+#keypad1 {
+display:block;
+}
+#keypad2 {
+display:none;
+}
+#keypad3 {
+display:none;
+}
+.key {
+background:url('key.png') no-repeat;
+width:72px;
+height:72px;
+font:36px "Lucida Grande", Geneva, Arial, Verdana, sans-serif;
+color:#fff;
+margin:2px;
+text-align:center;
+cursor:pointer;
+}
+.kc {
+padding:13px 0 0 0;
+}
+
+pre.stat {
+	margin:0 0 8px 0;
+	padding:4px;
+	font:12px "Lucida Grande", Geneva, Arial, Verdana, sans-serif;
+	border-top: 1px solid #222;
+	border-bottom: 1px solid #222;
+	color: #666;
+}
+pre.stat span {
+	padding: 0px;
+}
+
+pre.term {
+	margin: 0px;
+	padding: 4px;
+	display: block;
+	font-family: monospace;
+	font-size:10px;
+	white-space: pre;
+	background-color: black;
+	border-top: 1px solid #333;
+	color: #eee;
+	background-color: #111;
+}
+pre.term span.f0  { color: #111; }
+pre.term span.f1  { color: #b11; }
+pre.term span.f2  { color: #1b1; }
+pre.term span.f3  { color: #bb1; }
+pre.term span.f4  { color: #11b; }
+pre.term span.f5  { color: #b1b; }
+pre.term span.f6  { color: #1bb; }
+pre.term span.f7  { color: #bbb; }
+pre.term span.f8  { color: #666; }
+pre.term span.f9  { color: #f11; }
+pre.term span.f10 { color: #1f1; }
+pre.term span.f11 { color: #ff1; }
+pre.term span.f12 { color: #11f; }
+pre.term span.f13 { color: #f1f; }
+pre.term span.f14 { color: #1ff; }
+pre.term span.f15 { color: #fff; }
+pre.term span.b0  { background-color: #111; }
+pre.term span.b1  { background-color: #b11; }
+pre.term span.b2  { background-color: #1b1; }
+pre.term span.b3  { background-color: #bb1; }
+pre.term span.b4  { background-color: #11b; }
+pre.term span.b5  { background-color: #b1b; }
+pre.term span.b6  { background-color: #1bb; }
+pre.term span.b7  { background-color: #bbb; }
+

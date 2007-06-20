@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+	<title>WebShell 0.2.0</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+	<link rel="stylesheet" type="text/css" href="ajaxterm.css"/>
+	<script type="text/javascript" src="sarissa.js"></script>
+	<script type="text/javascript" src="sarissa_dhtml.js"></script>
+	<script type="text/javascript" src="ajaxterm.js"></script>
+	<script type="text/javascript">
+	var t;
+	window.onload=function() {
+		t=ajaxterm.Terminal("term",80,25);
+		document.getElementById("textinput").focus();
+	};
+	function setKeypad(value) {
+		document.getElementById("keypad1").style.display = (value == 1) ? 'block' : 'none';
+		document.getElementById("keypad2").style.display = (value == 2) ? 'block' : 'none';
+		document.getElementById("keypad3").style.display = (value == 3) ? 'block' : 'none';
+	}
+	function sendText() {
+		var textinput = document.getElementById("textinput").value;
+		document.getElementById("textinput").value = '';
+		for (var i = 0; i < textinput.length; i++)
+			t.sendkey(textinput.charCodeAt(i));
+		if (!textinput.length)
+			t.sendkey(13);
+		document.getElementById("textinput").focus();
+	}
+	function sendKey(value) {
+		var textinput = document.getElementById("textinput").value;
+		if (textinput.length)
+			sendText();
+		t.sendkey(value);
+	}
+	</script>
+</head>
+<body>
+<div id="term"></div>
+<div id="uiarea">
+<div id="textpad" align="center">
+<form name="textform" onsubmit="sendText();return false;"><input type="text" id="textinput" name="textinput" size="48"></form>
+</div>
+<div id="keypad1">
+<table align="center">
+<tr>
+<td><div class="key" onClick="sendKey(27)"><div class="kc">ESC</div></div></td>
+<td><div class="key"><div onClick="sendKey(9)" class="kc">&#8677;</div></div></td>
+<td><div class="key" onClick="sendKey(13)"><div class="kc">&#8617;</div></div></td>
+<td><div class="key" onClick="sendKey(8)"><div class="kc">&#8592;</div></div></td>
+<td><div class="key" onClick="setKeypad(2)"><div class="kc">&#8997;</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(63273)"><div class="kc">&#8670;</div></div></td>
+<td><div class="key" onClick="sendKey(63276)"><div class="kc">&#8598;</div></div></td>
+<td><div class="key" onClick="sendKey(63232)"><div class="kc">&#8673;</div></div></td>
+<td><div class="key" onClick="sendKey(63277)"><div class="kc">&#8600;</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(63275)"><div class="kc">&#8671;</div></div></td>
+<td><div class="key" onClick="sendKey(63234)"><div class="kc">&#8672;</div></div></td>
+<td><div class="key" onClick="sendKey(63233)"><div class="kc">&#8675;</div></div></td>
+<td><div class="key" onClick="sendKey(63235)"><div class="kc">&#8674;</div></div></td>
+<td><div class="key" onClick="sendKey(29)"><div class="kc">&#8963;]</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(63236)"><div class="kc">F1</div></div></td>
+<td><div class="key" onClick="sendKey(63237)"><div class="kc">F2</div></div></td>
+<td><div class="key" onClick="sendKey(63238)"><div class="kc">F3</div></div></td>
+<td><div class="key" onClick="sendKey(63239)"><div class="kc">F4</div></div></td>
+<td><div class="key" onClick="sendKey(63240)"><div class="kc">F5</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(63241)"><div class="kc">F6</div></div></td>
+<td><div class="key" onClick="sendKey(63242)"><div class="kc">F7</div></div></td>
+<td><div class="key" onClick="sendKey(63243)"><div class="kc">F8</div></div></td>
+<td><div class="key" onClick="sendKey(63244)"><div class="kc">F9</div></div></td>
+<td><div class="key" onClick="sendKey(63245)"><div class="kc">F10</div></div></td>
+</tr>
+</table>
+</div>
+
+<div id="keypad2">
+<table align="center">
+<tr>
+<td><div class="key" onClick="sendKey(1)"><div class="kc">&#8963;A</div></div></td>
+<td><div class="key" onClick="sendKey(2)"><div class="kc">&#8963;B</div></div></td>
+<td><div class="key" onClick="sendKey(3)"><div class="kc">&#8963;C</div></div></td>
+<td><div class="key" onClick="sendKey(4)"><div class="kc">&#8963;D</div></div></td>
+<td><div class="key" onClick="setKeypad(1)"><div class="kc">&#8997;</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(5)"><div class="kc">&#8963;E</div></div></td>
+<td><div class="key" onClick="sendKey(6)"><div class="kc">&#8963;F</div></div></td>
+<td><div class="key" onClick="sendKey(7)"><div class="kc">&#8963;G</div></div></td>
+<td><div class="key" onClick="sendKey(10)"><div class="kc">&#8963;J</div></div></td>
+<td><div class="key" onClick="sendKey(11)"><div class="kc">&#8963;K</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(12)"><div class="kc">&#8963;L</div></div></td>
+<td><div class="key" onClick="sendKey(14)"><div class="kc">&#8963;N</div></div></td>
+<td><div class="key" onClick="sendKey(15)"><div class="kc">&#8963;O</div></div></td>
+<td><div class="key" onClick="sendKey(16)"><div class="kc">&#8963;P</div></div></td>
+<td><div class="key" onClick="sendKey(17)"><div class="kc">&#8963;Q</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(18)"><div class="kc">&#8963;R</div></div></td>
+<td><div class="key" onClick="sendKey(19)"><div class="kc">&#8963;S</div></div></td>
+<td><div class="key" onClick="sendKey(20)"><div class="kc">&#8963;T</div></div></td>
+<td><div class="key" onClick="sendKey(21)"><div class="kc">&#8963;U</div></div></td>
+<td><div class="key" onClick="sendKey(22)"><div class="kc">&#8963;V</div></div></td>
+</tr>
+<tr>
+<td><div class="key" onClick="sendKey(23)"><div class="kc">&#8963;W</div></div></td>
+<td><div class="key" onClick="sendKey(24)"><div class="kc">&#8963;X</div></div></td>
+<td><div class="key" onClick="sendKey(25)"><div class="kc">&#8963;Y</div></div></td>
+<td><div class="key" onClick="sendKey(26)"><div class="kc">&#8963;Z</div></div></td>
+</tr>
+</table>
+</div>
+
+</div>
+</body>
+</html>
