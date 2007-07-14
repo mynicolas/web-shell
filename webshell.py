@@ -470,7 +470,6 @@ class Multiplex:
 				pass
 			try:
 				os.waitpid(self.session[sid]['pid'],0)
-				print 'waitpid'
 			except (IOError,OSError):
 				pass
 			del self.session[sid]['fd']
@@ -542,7 +541,7 @@ class Multiplex:
 		return dump
 	def proc_thread(self):
 		while not self.signal_stop:
-			print self.session
+#			print self.session
 			# Process management
 			now=time.time()
 			fds=[]
