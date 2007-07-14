@@ -102,6 +102,7 @@ class Terminal:
 		self.cl=0
 		# Color mask
 		self.sgr=0x000700
+		# Buffer
 		self.buf=""
 		self.outbuf=""
 		self.last_html=""
@@ -403,8 +404,6 @@ class Multiplex:
 			# Start a new session
 			self.session[sid]={'state':'unborn','term':Terminal(w,h),'time':time.time(),'w':w,'h':h}
 			return self.proc_spawn(sid)
-		elif self.session[sid]['state']=='unborn':
-			return True
 		elif self.session[sid]['state']=='alive':
 			# Update terminal size
 			if self.session[sid]['w']!=w or self.session[sid]['h']!=h:
@@ -423,6 +422,7 @@ class Multiplex:
 			# Fork new process
 			pid,fd=os.forkpty()
 		except (IOError,OSError):
+			self.session[sid]['state']='dead'
 			return False
 		if pid==0:
 			# Check max ttys
@@ -496,8 +496,6 @@ class Multiplex:
 		# Read from process
 		if sid not in self.session:
 			return False
-		elif self.session[sid]['state']=='unborn':
-			return True
 		elif self.session[sid]['state']=='dead':
 			return False
 		fd = self.session[sid]['fd']
@@ -523,8 +521,6 @@ class Multiplex:
 		# Write to process
 		if sid not in self.session:
 			return False
-		elif self.session[sid]['state']=='unborn':
-			return True
 		elif self.session[sid]['state']=='dead':
 			return False
 		try:
@@ -551,9 +547,6 @@ class Multiplex:
 				if (now-then)>10:
 					self.proc_kill(sid)
 				else:
-#					if self.session[sid]['state']=='unborn':
-#						self.proc_spawn(sid)
-#					elif self.session[sid]['state']=='alive':
 					if self.session[sid]['state']=='alive':
 						fds.append(self.session[sid]['fd'])
 						fd2sid[self.session[sid]['fd']]=sid
@@ -648,8 +641,7 @@ def main():
 		print 'WebShell at http://localhost:%s/' % o.port
 	webshell=WebShell(o.cmd,o.index_file,o.max_tty)
 	try:
-#		qweb.QWebWSGIServer(webshell,ip='localhost',port=int(o.port),threaded=0,log=o.log).serve_forever()
-		qweb.QWebWSGIServer(webshell,ip='0.0.0.0',port=int(o.port),threaded=0,log=o.log).serve_forever()
+		qweb.QWebWSGIServer(webshell,ip='localhost',port=int(o.port),threaded=0,log=o.log).serve_forever()
 	except KeyboardInterrupt,e:
 		print 'Stopped'
 	webshell.stop()
