@@ -1,11 +1,11 @@
-ajaxterm={};
-ajaxterm.TerminalClass=function(id,width,height) {
+webshell={};
+webshell.TerminalClass=function(id,width,height) {
 	var ie=0;
 	if(window.ActiveXObject)
 		ie=1;
 	var sid=""+Math.round(Math.random()*1000000000);
 	var query0="s="+sid+"&w="+width+"&h="+height;
-	var query1=query0+"&c=1&k=";
+	var query1=query0+"&k=";
 	var buf="";
 	var timeout;
 	var error_timeout;
@@ -14,39 +14,13 @@ ajaxterm.TerminalClass=function(id,width,height) {
 	var rmax=1;
 
 	var div=document.getElementById(id);
-	var dstat=document.createElement('pre');
-	var sled=document.createElement('span');
-	var opt_get=document.createElement('a');
-	var opt_color=document.createElement('a');
-	var opt_paste=document.createElement('a');
-	var sdebug=document.createElement('span');
+	var opt_get='on';
 	var dterm=document.createElement('div');
 
-	function debug(s) {
-		sdebug.innerHTML=s;
-	}
 	function error() {
-		sled.className='off';
-//		debug("Connection lost timeout ts:"+((new Date).getTime()));
-		debug("Disconnected.");
-	}
-	function opt_add(opt,name) {
-		opt.className='off';
-		opt.innerHTML=' '+name+' ';
-		dstat.appendChild(opt);
-		dstat.appendChild(document.createTextNode(' '));
 	}
 	function do_get(event) {
 		opt_get.className=(opt_get.className=='off')?'on':'off';
-		debug('GET '+opt_get.className);
-	}
-	function do_color(event) {
-		var o=opt_color.className=(opt_color.className=='off')?'on':'off';
-		if(o=='on')
-			query1=query0+"&c=1&k=";
-		else
-			query1=query0+"&k=";
-		debug('Color '+opt_color.className);
 	}
 	function mozilla_clipboard() {
 		 // mozilla sucks
@@ -87,16 +61,13 @@ ajaxterm.TerminalClass=function(id,width,height) {
 			p=mozilla_clipboard();
 		}
 		if (p) {
-			debug('Pasted');
 			queue(encodeURIComponent(p));
 		} else {
 		}
 	}
 	function update() {
-//		debug("ts: "+((new Date).getTime())+" rmax:"+rmax);
 		if(sending==0) {
 			sending=1;
-			sled.className='on';
 			var r=new XMLHttpRequest();
 			var send="";
 			while(keybuf.length>0) {
@@ -113,7 +84,6 @@ ajaxterm.TerminalClass=function(id,width,height) {
 			}
 			r.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 			r.onreadystatechange = function () {
-//				debug("xhr:"+((new Date).getTime())+" state:"+r.readyState+" status:"+r.status+" statusText:"+r.statusText);
 				if (r.readyState==4) {
 					if(r.status==200) {
 						window.clearTimeout(error_timeout);
@@ -133,10 +103,8 @@ ajaxterm.TerminalClass=function(id,width,height) {
 								rmax=2000;
 						}
 						sending=0;
-						sled.className='off';
 						timeout=window.setTimeout(update,rmax);
 					} else {
-//						debug("Connection error status:"+r.status);
 						debug("Connection error.");
 					}
 				}
@@ -157,28 +125,28 @@ ajaxterm.TerminalClass=function(id,width,height) {
 		}
 	}
 	this.sendkey = function(kc) {
-		standardkeypress(kc);
+		privatesendkey(kc);
 	}
-	function standardkeypress(kc) {
+	function privatesendkey(kc) {
 		var k="";
 
 		// Build character
 		switch (kc) {
-		case 63276: k="[5~"; break;	// PgUp
-		case 63277: k="[6~"; break;	// PgDn
-		case 63275: k="[4~"; break;	// End
-		case 63273: k="[1~"; break;	// Home
-		case 63234: k="[D"; break;	// Left
-		case 63232: k="[A"; break;	// Up
-		case 63235: k="[C"; break;	// Right
-		case 63233: k="[B"; break;	// Down
-		case 63302: k="[2~"; break;	// Ins
-		case 63272: k="[3~"; break;	// Del
-		case 63236: k="[[A"; break;	// F1
-		case 63237: k="[[B"; break;	// F2
-		case 63238: k="[[C"; break;	// F3
-		case 63239: k="[[D"; break;	// F4
-		case 63240: k="[[E"; break;	// F5
+		case 63276: k="[5~"; break;		// PgUp
+		case 63277: k="[6~"; break;		// PgDn
+		case 63275: k="[4~"; break;		// End
+		case 63273: k="[1~"; break;		// Home
+		case 63234: k="[D"; break;		// Left
+		case 63232: k="[A"; break;		// Up
+		case 63235: k="[C"; break;		// Right
+		case 63233: k="[B"; break;		// Down
+		case 63302: k="[2~"; break;		// Ins
+		case 63272: k="[3~"; break;		// Del
+		case 63236: k="[[A"; break;		// F1
+		case 63237: k="[[B"; break;		// F2
+		case 63238: k="[[C"; break;		// F3
+		case 63239: k="[[D"; break;		// F4
+		case 63240: k="[[E"; break;		// F5
 		case 63241: k="[17~"; break;	// F6
 		case 63242: k="[18~"; break;	// F7
 		case 63243: k="[19~"; break;	// F8
@@ -189,11 +157,13 @@ ajaxterm.TerminalClass=function(id,width,height) {
 		}
 		if (k.length)
 			k=String.fromCharCode(27)+k;
-
-		if (kc==8) kc=127;		// Backspace
-		if (kc>=0 && kc<= 128)
-			k=String.fromCharCode(kc);
-
+		else {
+			if (kc==8)	// Backspace
+				kc=127;
+			if (kc>=0)
+				k=String.fromCharCode(kc);
+		}
+		
 		if(k.length) {
 //			queue(encodeURIComponent(k));
 			if(k=="+") {
@@ -203,12 +173,8 @@ ajaxterm.TerminalClass=function(id,width,height) {
 			}
 		}
 	};
-	function keypress(ev) {
+	this.keypress = function(ev) {
 		if (!ev) var ev=window.event;
-		s="kp keyCode="+ev.keyCode+" which="+ev.which+" shiftKey="+ev.shiftKey+" ctrlKey="+ev.ctrlKey+" altKey="+ev.altKey;
-		debug(s);
-//		return false;
-//		else { if (!ev.ctrlKey || ev.keyCode==17) { return; }
 		var kc;
 
 		// Translate other browsers to standard keycodes
@@ -234,7 +200,7 @@ ajaxterm.TerminalClass=function(id,width,height) {
 		} else if (ev.which==0) {
 			switch(kc) {
 			case 8: kc=127; break;		// Backspace
-			case 27: break;			// ESC
+			case 27: break;				// ESC
 			case 33: kc=63276; break;	// PgUp
 			case 34: kc=63277; break;	// PgDn
 			case 35: kc=63275; break;	// End
@@ -261,17 +227,18 @@ ajaxterm.TerminalClass=function(id,width,height) {
 			}
 		}
 
-//		ev.cancelBubble=true;
-//		if (ev.stopPropagation) ev.stopPropagation();
-//		if (ev.preventDefault)  ev.preventDefault();
-		standardkeypress(kc);
+		if (kc >= 0) {
+			ev.cancelBubble=true;
+			if (ev.stopPropagation) ev.stopPropagation();
+			if (ev.preventDefault) ev.preventDefault();
+		}
+
+		privatesendkey(kc);
 		return true;
 	}
-	function keydown(ev) {
+	this.keydown = function(ev) {
 		if (!ev) var ev=window.event;
 		if (ie) {
-//			s="kd keyCode="+ev.keyCode+" which="+ev.which+" shiftKey="+ev.shiftKey+" ctrlKey="+ev.ctrlKey+" altKey="+ev.altKey;
-//			debug(s);
 			o={9:1,8:1,27:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1,45:1,46:1,112:1,
 			113:1,114:1,115:1,116:1,117:1,118:1,119:1,120:1,121:1,122:1,123:1};
 			if (o[ev.keyCode] || ev.ctrlKey || ev.altKey) {
@@ -281,18 +248,11 @@ ajaxterm.TerminalClass=function(id,width,height) {
 		}
 	}
 	function init() {
-		dstat.appendChild(document.createTextNode(' '));
-		dstat.appendChild(sdebug);
-		dstat.className='stat';
-		div.appendChild(dstat);
 		div.appendChild(dterm);
-//		document.onkeypress=keypress;
-//		document.onkeydown=keydown;
-		debug('Connected.');
 		timeout=window.setTimeout(update,100);
 	}
 	init();
 }
-ajaxterm.Terminal=function(id,width,height) {
+webshell.Terminal=function(id,width,height) {
 	return new this.TerminalClass(id,width,height);
 }
