@@ -7,7 +7,7 @@ padding:0;
 #term {
 float:left;
 width:480px;
-height:256px;
+height:268px;
 z-index:-1;
 }
 pre.term {
@@ -46,7 +46,7 @@ pre.term span.b7 { background-color: #ffffff; }
 position:absolute;
 z-index:100;
 width:480px;
-height:256px;
+height:268px;
 cursor:pointer;
 }
 
@@ -54,7 +54,7 @@ cursor:pointer;
 position:absolute;
 z-index:50;
 width:480px;
-height:256px;
+height:268px;
 background:#141414;
 opacity:0.7;
 }
@@ -86,7 +86,7 @@ display:none;
 }
 
 .ctrltextborder {
-width:256px;
+width:268px;
 margin:11px 0 0 0;
 padding:0;
 border-style:solid;
