@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<title>WebShell 0.5.2</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<meta name="viewport" content="initial-scale=1.0, width=480, height=268" />
+<link rel="stylesheet" type="text/css" href="webshell.css"/>
+<script type="text/javascript" src="sarissa.js"></script>
+<script type="text/javascript" src="sarissa_dhtml.js"></script>
+<script type="text/javascript" src="webshell.js"></script>
+<script type="text/javascript">
+var t;
+window.onload=function() {
+	t=webshell.Terminal("term",80,24);
+	document.onkeypress=t.keypress;
+	document.onkeydown=t.keydown;
+	window.scrollTo(0,1);
+};
+function setOverlay(value) {
+	document.getElementById("overlay1").style.display = (value == 1) ? 'block' : 'none';
+	document.getElementById("overlay2").style.display = (value == 2) ? 'block' : 'none';
+	document.getElementById("overlay3").style.display = (value == 3) ? 'block' : 'none';
+	document.getElementById("overlay4").style.display = (value == 4) ? 'block' : 'none';
+	document.getElementById("overlay5").style.display = (value == 5) ? 'block' : 'none';
+
+	if (value == 1) {
+		document.onkeypress=t.keypress;
+		document.onkeydown=t.keydown;
+	} else {
+		document.onkeypress=null;
+		document.onkeydown=null;
+	}
+}
+function sendText() {
+	var textinput = document.getElementById("ctrltextinput").value;
+	document.getElementById("ctrltextinput").value = '';
+	for (var i = 0; i < textinput.length; i++)
+		t.sendkey(textinput.charCodeAt(i));
+	if (!textinput.length)
+		t.sendkey(13);
+	setOverlay(1);
+}
+function sendKey(value) {
+	var textinput = document.getElementById("ctrltextinput").value;
+	if (textinput.length)
+		sendText();
+	t.sendkey(value);
+	setOverlay(1);
+}
+</script>
+</head>
+<body>
+<div id="term"></div>
+<div id="overlay1">
+<div class="overlaybg" onClick="setOverlay(2)"></div>
+</div>
+
+<div id="overlay2">
+<div class="overlaybg" onClick="setOverlay(1)"></div>
+<div class="overlaygrayed"></div>
+<div class="overlaycontrols">
+<table>
+<tr>
+<td colspan="4">
+<form name="textform" onsubmit="sendText();return false;">
+<div class="ctrltextborder"><input type="text" id="ctrltextinput" name="textinput" /></div></form>
+</td>
+<td><div class="k" onClick="sendKey(8)"><div class="ks">&#8592;</div></div></td>
+<td><div class="k" onClick="sendKey(13)"><div class="ks">enter</div></div></td>
+</tr>
+<tr>
+<td><div class="k" onClick="setOverlay(4)"><div class="ks">F</div></div></td>
+<td><div class="k" onClick="sendKey(27)"><div class="ks">ESC</div></div></td>
+<td><div class="k" onClick="sendKey(63273)"><div class="ks">home</div></div></td>
+<td><div class="k" onClick="sendKey(63276)"><div class="ks">&#8598;</div></div></td>
+<td><div class="k" onClick="sendKey(63232)"><div class="ks">&#8673;</div></div></td>
+<td><div class="k" onClick="sendKey(63277)"><div class="ks">&#8600;</div></div></td>
+</tr>
+<tr>
+<td><div class="k" onClick="setOverlay(3)"><div class="ks">ctrl</div></div></td>
+<td><div class="k" onClick="sendKey(9)"><div class="ks">tab</div></div></td>
+<td><div class="k" onClick="sendKey(63275)"><div class="ks">end</div></div></td>
+<td><div class="k" onClick="sendKey(63234)"><div class="ks">&#8672;</div></div></td>
+<td><div class="k" onClick="sendKey(63233)"><div class="ks">&#8675;</div></div></td>
+<td><div class="k" onClick="sendKey(63235)"><div class="ks">&#8674;</div></div></td>
+</tr>
+</table>
+</div>
+</div>
+
+<div id="overlay3">
+<div class="overlaybg" onClick="setOverlay(1)"></div>
+<div class="overlaygrayed"></div>
+<div class="overlaycontrols">
+<table>
+<tr>
+<td><div class="k" onClick="sendKey(1)"><div class="ks">^A</div></div></td>
+<td><div class="k" onClick="sendKey(2)"><div class="ks">^B</div></div></td>
+<td><div class="k" onClick="sendKey(3)"><div class="ks">^C</div></div></td>
+<td><div class="k" onClick="sendKey(4)"><div class="ks">^D</div></div></td>
+<td><div class="k" onClick="sendKey(5)"><div class="ks">^E</div></div></td>
+<td><div class="k" onClick="sendKey(6)"><div class="ks">^F</div></div></td>
+</tr>
+<tr>
+<td><div class="k" onClick="sendKey(7)"><div class="ks">^G</div></div></td>
+<td><div class="k" onClick="sendKey(10)"><div class="ks">^J</div></div></td>
+<td><div class="k" onClick="sendKey(11)"><div class="ks">^K</div></div></td>
+<td><div class="k" onClick="sendKey(12)"><div class="ks">^L</div></div></td>
+<td><div class="k" onClick="sendKey(14)"><div class="ks">^N</div></div></td>
+<td><div class="k" onClick="sendKey(15)"><div class="ks">^O</div></div></td>
+</tr>
+<tr>
+<td><div class="k" onClick="sendKey(16)"><div class="ks">^P</div></div></td>
+<td><div class="k" onClick="sendKey(17)"><div class="ks">^Q</div></div></td>
+<td><div class="k" onClick="sendKey(18)"><div class="ks">^R</div></div></td>
+<td><div class="k" onClick="sendKey(19)"><div class="ks">^S</div></div></td>
+<td><div class="k" onClick="sendKey(20)"><div class="ks">^T</div></div></td>
+<td><div class="k" onClick="sendKey(21)"><div class="ks">^U</div></div></td>
+</tr>
+<tr>
+<td><div class="k" onClick="sendKey(22)"><div class="ks">^V</div></div></td>
+<td><div class="k" onClick="sendKey(23)"><div class="ks">^W</div></div></td>
+<td><div class="k" onClick="sendKey(24)"><div class="ks">^X</div></div></td>
+<td><div class="k" onClick="sendKey(25)"><div class="ks">^Y</div></div></td>
+<td><div class="k" onClick="sendKey(26)"><div class="ks">^Z</div></div></td>
+<td><div class="k" onClick="sendKey(29)"><div class="ks">^]</div></div></td>
+</tr>
+</table>
+</div>
+</div>
+
+<div id="overlay4">
+<div class="overlaybg" onClick="setOverlay(1)"></div>
+<div class="overlaygrayed"></div>
+<div class="overlaycontrols">
+<div class="ctrlfunctions">
+<table>
+<tr>
+<td><div class="k" onClick="sendKey(63236)"><div class="ks">F1</div></div></td>
+<td><div class="k" onClick="sendKey(63237)"><div class="ks">F2</div></div></td>
+<td><div class="k" onClick="sendKey(63238)"><div class="ks">F3</div></div></td>
+<td><div class="k" onClick="sendKey(63239)"><div class="ks">F4</div></div></td>
+<td><div class="k" onClick="sendKey(63240)"><div class="ks">F5</div></div></td>
+<td><div class="k" onClick="sendKey(63241)"><div class="ks">F6</div></div></td>
+</tr>
+<tr>
+<td><div class="k" onClick="sendKey(63242)"><div class="ks">F7</div></div></td>
+<td><div class="k" onClick="sendKey(63243)"><div class="ks">F8</div></div></td>
+<td><div class="k" onClick="sendKey(63244)"><div class="ks">F9</div></div></td>
+<td><div class="k" onClick="sendKey(63245)"><div class="ks">F10</div></div></td>
+<td><div class="k" onClick="sendKey(63246)"><div class="ks">F11</div></div></td>
+<td><div class="k" onClick="sendKey(63247)"><div class="ks">F12</div></div></td>
+</tr>
+</div>
+</table>
+</div>
+</div>
+</div>
+
+<div id="overlay5">
+<div class="overlaygrayed"></div>
+<div class="overlaycontrols">
+<div class="ctrlerror">Disconnected</div>
+</div>
+</div>
+
+</body>
+</html>

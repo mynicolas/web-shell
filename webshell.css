@@ -1,0 +1,131 @@
+body {
+background-color:#000;
+margin:0;
+padding:0;
+}
+
+#term {
+float:left;
+width:480px;
+height:256px;
+z-index:-1;
+}
+pre.term {
+	margin:0;
+	padding:0;
+	display:block;
+	font: 10px Andale Mono, monospace;
+	white-space:pre;
+}
+
+pre.term span.b8 { background-color: #555555; }
+pre.term span.fe { color: #000000; }
+pre.term span.ff { color: #ffffff; }
+pre.term span.be { background-color: #ffffff; }
+pre.term span.bf { background-color: transparent; }
+
+pre.term span.f0 { color: #000000; }
+pre.term span.f1 { color: #b91f14; }
+pre.term span.f2 { color: #4cc51e; }
+pre.term span.f3 { color: #cdc925; }
+pre.term span.f4 { color: #001bc7; }
+pre.term span.f5 { color: #b82ac8; }
+pre.term span.f6 { color: #4ac8ca; }
+pre.term span.f7 { color: #f2f2f2; }
+
+pre.term span.b0 { background-color: #000000; }
+pre.term span.b1 { background-color: #cc0000; }
+pre.term span.b2 { background-color: #00cc00; }
+pre.term span.b3 { background-color: #cccc00; }
+pre.term span.b4 { background-color: #0e00cc; }
+pre.term span.b5 { background-color: #cc00cc; }
+pre.term span.b6 { background-color: #00cccc; }
+pre.term span.b7 { background-color: #ffffff; }
+
+.overlaybg {
+position:absolute;
+z-index:100;
+width:480px;
+height:256px;
+cursor:pointer;
+}
+
+.overlaygrayed {
+position:absolute;
+z-index:50;
+width:480px;
+height:256px;
+background:#141414;
+opacity:0.7;
+}
+
+table {
+border-collapse:collapse;
+}
+
+.overlaycontrols {
+position:absolute;
+z-index:200;
+margin-left:42px;
+width:396px;
+}
+#overlay1 {
+display:block;
+}
+#overlay2 {
+display:none;
+}
+#overlay3 {
+display:none;
+}
+#overlay4 {
+display:none;
+}
+#overlay5 {
+display:none;
+}
+
+.ctrltextborder {
+width:256px;
+margin:11px 0 0 0;
+padding:0;
+border-style:solid;
+border-width:1px;
+border-color:#bbb;
+}
+#ctrltextinput {
+width:252px;
+margin:0;
+padding:4px 2px 4px 2px;
+border:0;
+font:22px sans-serif;
+color:#fff;
+background:#2d2d2d;
+opacity:0.8;
+}
+
+.k {
+width:64px;
+height:62px;
+background:url('key.png') no-repeat;
+font:22px sans-serif;
+color:#fff;
+margin:0;
+padding:0;
+text-align:center;
+cursor:pointer;
+}
+.ks {
+padding:18px 4px 0 0;
+}
+
+.ctrlfunctions {
+margin-top:64px;
+}
+
+.ctrlerror {
+padding:110px 0 0 0;
+text-align:center;
+font:24px sans-serif;
+color:#bbb;
+}
