@@ -23,7 +23,7 @@ class Terminal:
 		pass
 	def reset(self):
 		# Attribute mask (Foreground, Background): 0x00FB0000
-		self.attr=0x700000
+		self.attr=0xff0000
 		# Screen
 		self.screen=array.array('i',[self.attr|0x20]*self.w*self.h)
 		self.area_y0=0
@@ -55,15 +55,14 @@ class Terminal:
 		self.poke(y,x+1,self.peek(y,x,y+1,self.w-1))
 		self.clear(y,x,y+1,x+1)
 	def cursor_down(self):
-		if self.cy>=self.area_y0 and self.cy<self.area_y1:
-			if self.cy==(self.area_y1-1):
-				self.scroll_up(self.area_y0,self.area_y1)
-			else:
-				self.cy=self.cy+1
+#		if self.cy>=self.area_y0 and self.cy<self.area_y1:
+		if self.cy>=self.area_y1-1:
+			self.scroll_up(self.area_y0,self.area_y1)
+			self.cy=self.area_y1-1
+		else:
+			self.cy=self.cy+1
 	def cursor_right(self):
-		delta_y,self.cx=divmod(self.cx+1,self.w)
-		if delta_y:
-			self.cursor_down()
+		self.cx=self.cx+1
 	def ctrl_bs(self):
 		delta_y,self.cx=divmod(self.cx-1,self.w)
 		self.cy=max(self.area_y0,self.cy+delta_y)
@@ -75,6 +74,9 @@ class Terminal:
 	def ctrl_cr(self):
 		self.cx=0
 	def echo(self,char):
+		if self.cx>=self.w:
+			self.ctrl_cr()
+			self.ctrl_lf()
 		self.poke(self.cy,self.cx,array.array('i',[self.attr|char]))
 		self.cursor_right()
 		if char>=0x400:
@@ -98,7 +100,10 @@ class Terminal:
 		self.ctrl_out=""
 		return d
 	def write(self,d):
-		d=unicode(d,'utf8')
+		try:
+			d=unicode(d,'utf-8')
+		except UnicodeDecodeError:
+			return False
 		for c in d:
 			char = ord(c)
 			if char==8:
@@ -112,9 +117,12 @@ class Terminal:
 			elif not self.ctrl_esc(char):
 				if char>=0x20 and char<=0xffff:
 					self.echo(char)
+		return True
 	def dump(self):
 		pre=u""
 		bg_,fg_=-1,-1
+		cx=min(self.cx,self.w-1)
+		cy=self.cy
 		is_wide=False
 		for y in range(0,self.h):
 			for x in range(0,self.w):
@@ -124,7 +132,7 @@ class Terminal:
 				attr,char=divmod(self.screen[y*self.w+x],0x10000)
 				fg,bg=divmod(attr,0x10)
 				# Cursor
-				if self.cy==y and self.cx==x:
+				if cy==y and cx==x:
 					bg=8
 				# Color
 				if fg!=fg_ or bg!=bg_:
@@ -132,7 +140,7 @@ class Terminal:
 						pre+=u'</span>'
 					pre+=u'<span class="f%x b%x">'%(fg,bg)
 					fg_,bg_=fg,bg
-				# Character
+				# Escape HTML characters
 				if char==38:
 					pre+='&amp;'
 				elif char==60:
@@ -144,7 +152,7 @@ class Terminal:
 					if char>=0x400:
 						is_wide=True
 			pre+="\n"
-		# Escape HTML characters
+		# Encode in UTF-8
 		pre=pre.encode('utf-8')
 		pre+='</span>'
 		# Cache dump
@@ -295,11 +303,6 @@ class Multiplex:
 			if not d:
 				# Process finished, BSD
 				return False
-# DEBUG CODE
-			else:
-				fileHandle=open('/tmp/out.txt','a')
-				fileHandle.write(d)
-				fileHandle.close()
 		except (IOError,OSError):
 			# Process finished, Linux
 			return False
@@ -331,7 +334,6 @@ class Multiplex:
 		return self.session[sid]['term'].dump()
 	def proc_thread(self):
 		while not self.signal_stop:
-#			print self.session
 			# Process management
 			now=time.time()
 			fds=[]
@@ -361,7 +363,7 @@ class Multiplex:
 class WebShell:
 	def __init__(self,cmd=None,index_file='webshell.html'):
 		self.files={}
-		for i in ['css','html','js','png']:
+		for i in ['css','html','js','png','jpg']:
 			for j in glob.glob('*.%s'%i):
 				self.files[j]=file(j).read()
 		self.files['index']=file(index_file).read()

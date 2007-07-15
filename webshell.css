@@ -1,5 +1,5 @@
 body {
-background-color:#000;
+background:#111 url('Background.jpg') no-repeat;
 margin:0;
 padding:0;
 }
@@ -18,11 +18,13 @@ pre.term {
 	white-space:pre;
 }
 
-pre.term span.b8 { background-color: #555555; }
-pre.term span.fe { color: #000000; }
+pre.term span.bf { background-color: #transparent; }
 pre.term span.ff { color: #ffffff; }
-pre.term span.be { background-color: #ffffff; }
-pre.term span.bf { background-color: transparent; }
+
+pre.term span.b8 { background-color: #555555; }
+
+pre.term span.fe { color: #ffffff; }
+pre.term span.be { background-color: #000000; }
 
 pre.term span.f0 { color: #000000; }
 pre.term span.f1 { color: #b91f14; }

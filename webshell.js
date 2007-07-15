@@ -14,14 +14,10 @@ webshell.TerminalClass=function(id,width,height) {
 	var rmax=1;
 
 	var div=document.getElementById(id);
-	var opt_get='on';
 	var dterm=document.createElement('div');
 
-	function error() {
-	}
-	function do_get(event) {
-		opt_get.className=(opt_get.className=='off')?'on':'off';
-	}
+	var opt_get=true;
+
 	function mozilla_clipboard() {
 		 // mozilla sucks
 		try {
@@ -32,9 +28,8 @@ webshell.TerminalClass=function(id,width,height) {
 		}
 		var clip = Components.classes["@mozilla.org/widget/clipboard;1"].createInstance(Components.interfaces.nsIClipboard);
 		var trans = Components.classes["@mozilla.org/widget/transferable;1"].createInstance(Components.interfaces.nsITransferable);
-		if (!clip || !trans) {
+		if (!clip || !trans)
 			return undefined;
-		}
 		trans.addDataFlavor("text/unicode");
 		clip.getData(trans,clip.kGlobalClipboard);
 		var str=new Object();
@@ -44,44 +39,36 @@ webshell.TerminalClass=function(id,width,height) {
 		} catch(err) {
 			return "";
 		}
-		if (str) {
+		if (str)
 			str=str.value.QueryInterface(Components.interfaces.nsISupportsString);
-		}
-		if (str) {
+		if (str)
 			return str.data.substring(0,strLength.value / 2);
-		} else {
+		else
 			return "";
-		}
 	}
 	function do_paste(event) {
 		var p=undefined;
-		if (window.clipboardData) {
+		if (window.clipboardData)
 			p=window.clipboardData.getData("Text");
-		} else if(window.netscape) {
+		else if(window.netscape)
 			p=mozilla_clipboard();
-		}
-		if (p) {
+		if (p)
 			queue(encodeURIComponent(p));
-		} else {
-		}
 	}
 	function update() {
 		if(sending==0) {
 			sending=1;
 			var r=new XMLHttpRequest();
 			var send="";
-			while(keybuf.length>0) {
+			while(keybuf.length>0)
 				send+=keybuf.pop();
-			}
 			var query=query1+send;
-			if(opt_get.className=='on') {
+			if(opt_get) {
 				r.open("GET","u?"+query,true);
-				if(ie) {
+				if(ie)
 					r.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
-				}
-			} else {
+			} else
 				r.open("POST","u",true);
-			}
 			r.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 			r.onreadystatechange = function () {
 				if (r.readyState==4) {
@@ -89,13 +76,7 @@ webshell.TerminalClass=function(id,width,height) {
 						window.clearTimeout(error_timeout);
 						de=r.responseXML.documentElement;
 						if(de.tagName=="pre") {
-							if(ie) {
-								Sarissa.updateContentFromNode(de, dterm);
-							} else {
-								Sarissa.updateContentFromNode(de, dterm);
-//								old=div.firstChild;
-//								div.replaceChild(de,old);
-							}
+							Sarissa.updateContentFromNode(de, dterm);
 							rmax=100;
 						} else {
 							rmax*=2;
@@ -104,17 +85,15 @@ webshell.TerminalClass=function(id,width,height) {
 						}
 						sending=0;
 						timeout=window.setTimeout(update,rmax);
-					} else {
+					} else
 						debug("Connection error.");
-					}
 				}
 			}
-			error_timeout=window.setTimeout(error,5000);
-			if(opt_get.className=='on') {
+//			error_timeout=window.setTimeout(error,5000);
+			if (opt_get)
 				r.send(null);
-			} else {
+			else
 				r.send(query);
-			}
 		}
 	}
 	function queue(s) {
@@ -125,9 +104,9 @@ webshell.TerminalClass=function(id,width,height) {
 		}
 	}
 	this.sendkey = function(kc) {
-		privatesendkey(kc);
+		private_sendkey(kc);
 	}
-	function privatesendkey(kc) {
+	function private_sendkey(kc) {
 		var k="";
 
 		// Build character
@@ -164,14 +143,8 @@ webshell.TerminalClass=function(id,width,height) {
 				k=String.fromCharCode(kc);
 		}
 		
-		if(k.length) {
-//			queue(encodeURIComponent(k));
-			if(k=="+") {
-				queue("%2B");
-			} else {
-				queue(escape(k));
-			}
-		}
+		if(k.length)
+			queue(encodeURIComponent(k));
 	};
 	this.keypress = function(ev) {
 		if (!ev) var ev=window.event;
@@ -228,12 +201,13 @@ webshell.TerminalClass=function(id,width,height) {
 		}
 
 		if (kc >= 0) {
+			private_sendkey(kc);
+			
 			ev.cancelBubble=true;
 			if (ev.stopPropagation) ev.stopPropagation();
 			if (ev.preventDefault) ev.preventDefault();
 		}
 
-		privatesendkey(kc);
 		return true;
 	}
 	this.keydown = function(ev) {
