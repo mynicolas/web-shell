@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-""" WebShell Server 0.5.2 """
+""" WebShell Server 0.5.3 """
 
 import array,time,glob,optparse,random,re
 import os,sys,pty,signal,select,commands,threading,fcntl,termios,struct,pwd
@@ -38,7 +38,7 @@ class Terminal:
 		self.dump_cache=""
 	# Dumb terminal functions
 	def peek(self,y0,x0,y1,x1):
-		return self.screen[self.w*y0+x0:self.w*(y1-1)+(x1-1)]
+		return self.screen[self.w*y0+x0:self.w*(y1-1)+x1]
 	def poke(self,y,x,s):
 		pos=self.w*y+x
 		self.screen[pos:pos+len(s)]=s
@@ -67,7 +67,6 @@ class Terminal:
 	def ctrl_bs(self):
 		delta_y,self.cx=divmod(self.cx-1,self.w)
 		self.cy=max(self.area_y0,self.cy+delta_y)
-		self.clear(self.cy,self.cx,self.cy+1,self.cx+1)
 	def ctrl_tab(self):
 		tab,sub=divmod(self.cx+8,8)
 		self.cx=min(tab*8,self.w-1)
@@ -78,7 +77,7 @@ class Terminal:
 	def echo(self,char):
 		self.poke(self.cy,self.cx,array.array('i',[self.attr|char]))
 		self.cursor_right()
-		if char>0x400:
+		if char>=0x400:
 			# Double width characters
 			self.cursor_right()
 			
@@ -116,8 +115,12 @@ class Terminal:
 	def dump(self):
 		pre=u""
 		bg_,fg_=-1,-1
+		is_wide=False
 		for y in range(0,self.h):
 			for x in range(0,self.w):
+				if is_wide:
+					is_wide=False
+					continue
 				attr,char=divmod(self.screen[y*self.w+x],0x10000)
 				fg,bg=divmod(attr,0x10)
 				# Cursor
@@ -138,6 +141,8 @@ class Terminal:
 					pre+='&gt;'
 				else:
 					pre+=unichr(char)
+					if char>=0x400:
+						is_wide=True
 			pre+="\n"
 		# Escape HTML characters
 		pre=pre.encode('utf-8')
