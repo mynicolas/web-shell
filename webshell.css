@@ -18,31 +18,31 @@ pre.term {
 	white-space:pre;
 }
 
-pre.term span.bf { background-color: #transparent; }
-pre.term span.ff { color: #ffffff; }
-
-pre.term span.b8 { background-color: #555555; }
-
-pre.term span.fe { color: #ffffff; }
-pre.term span.be { background-color: #000000; }
+pre.term span.ul { text-decoration: underline; }
 
 pre.term span.f0 { color: #000000; }
-pre.term span.f1 { color: #b91f14; }
-pre.term span.f2 { color: #4cc51e; }
-pre.term span.f3 { color: #cdc925; }
-pre.term span.f4 { color: #001bc7; }
-pre.term span.f5 { color: #b82ac8; }
-pre.term span.f6 { color: #4ac8ca; }
+pre.term span.f1 { color: #c00006; }
+pre.term span.f2 { color: #1bc806; }
+pre.term span.f3 { color: #c3c609; }
+pre.term span.f4 { color: #0000c2; }
+pre.term span.f5 { color: #bf00c2; }
+pre.term span.f6 { color: #19c4c2; }
 pre.term span.f7 { color: #f2f2f2; }
+pre.term span.fc { color: transparent; }	/* Concealed */
+pre.term span.fe { color: #000000; }		/* Negative fg */
+pre.term span.ff { color: #ffffff; }		/* Default fg */
 
 pre.term span.b0 { background-color: #000000; }
-pre.term span.b1 { background-color: #cc0000; }
+pre.term span.b1 { background-color: #cc2300; }
 pre.term span.b2 { background-color: #00cc00; }
 pre.term span.b3 { background-color: #cccc00; }
-pre.term span.b4 { background-color: #0e00cc; }
-pre.term span.b5 { background-color: #cc00cc; }
+pre.term span.b4 { background-color: #0e2acc; }
+pre.term span.b5 { background-color: #cc34cc; }
 pre.term span.b6 { background-color: #00cccc; }
-pre.term span.b7 { background-color: #ffffff; }
+pre.term span.b7 { background-color: #f5f5f5; }
+pre.term span.bc { background-color: #555555; }		/* Cursor */
+pre.term span.be { background-color: transparent; }	/* Default bg */
+pre.term span.bf { background-color: #ffffff; }		/* Negative bg */
 
 .overlaybg {
 position:absolute;

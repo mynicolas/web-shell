@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
-""" WebShell Server 0.5.3 """
+""" WebShell Server """
+""" Released under the GPL 2.0 by Marc S. Ressl """
+
+version="0.5.4"
 
 import array,time,glob,optparse,random,re
 import os,sys,pty,signal,select,commands,threading,fcntl,termios,struct,pwd
@@ -18,128 +21,680 @@ class Terminal:
 		self.h=h
 		self.init()
 		self.reset()
-		self.write('Debug message: this is an experimental dumb terminal\n\r')
 	def init(self):
-		pass
+		# Attribute mask: 0x0XFB0000
+		#  X: Bit 0 - Underlined
+		#     Bit 1 - Negative
+		#     Bit 2 - Concealed
+		#  F: Foreground
+		#  B: Background
+		self.attr=0x00fe0000
+		# Scroll parameters
+		self.scroll_area_y0=0
+		self.scroll_area_y1=self.h
+		# Modes
+		self.vt100_mode_insert=False
+		self.vt100_mode_inverse=False
+		self.vt100_mode_origin=False
+		self.vt100_mode_autowrap=True
+		self.vt100_mode_cursor=True
+		self.vt100_mode_alt_screen=False
+		self.vt100_mode_column_switch=False
+		# Saved cursor data
+		self.vt100_saved_cx=0
+		self.vt100_saved_cy=0
+		self.vt100_saved_attr=self.attr
+		self.vt100_saved_mode_origin=self.vt100_mode_origin
+		self.vt100_saved_mode_autowrap=self.vt100_mode_autowrap
+		# Control sequences
+		self.vt100_parse_len=0
+		self.vt100_parse_state=""
+		self.vt100_parse_func=""
+		self.vt100_parse_param=""
+		# Buffers
+		self.vt100_out=""
+		# Caches
+		self.dump_cache=""
 	def reset(self):
-		# Attribute mask (Foreground, Background): 0x00FB0000
-		self.attr=0xff0000
 		# Screen
 		self.screen=array.array('i',[self.attr|0x20]*self.w*self.h)
-		self.area_y0=0
-		self.area_y1=self.h
+		self.screen2=array.array('i',[self.attr|0x20]*self.w*self.h)
 		# Cursor position
 		self.cx=0
 		self.cy=0
-		# Buffers
-		self.ctrl_in=""
-		self.ctrl_out=""
-		# Caches
-		self.dump_cache=""
-	# Dumb terminal functions
+		# Tab stops
+		self.tab_stops=range(0,self.w,8)
+	# Low-level terminal functions
 	def peek(self,y0,x0,y1,x1):
 		return self.screen[self.w*y0+x0:self.w*(y1-1)+x1]
 	def poke(self,y,x,s):
 		pos=self.w*y+x
 		self.screen[pos:pos+len(s)]=s
-	def clear(self,y0,x0,y1,x1):
+	def fill(self,y0,x0,y1,x1,char):
 		n=self.w*(y1-y0-1)+(x1-x0)
-		self.poke(y0,x0,array.array('i',[self.attr|0x20]*n))
-	def scroll_up(self,y0,y1):
-		self.poke(y0,0,self.peek(y0+1,0,y1,self.w))
-		self.clear(y1-1,0,y1,self.w)
-	def scroll_down(self,y0,y1):
-		self.poke(y0+1,0,self.peek(y0,0,y1-1,self.w))
-		self.clear(y0,0,y0+1,self.w)
-	def scroll_line_right(self,y,x):
-		self.poke(y,x+1,self.peek(y,x,y+1,self.w-1))
-		self.clear(y,x,y+1,x+1)
-	def cursor_down(self):
-#		if self.cy>=self.area_y0 and self.cy<self.area_y1:
-		if self.cy>=self.area_y1-1:
-			self.scroll_up(self.area_y0,self.area_y1)
-			self.cy=self.area_y1-1
+		self.poke(y0,x0,array.array('i',[char]*n))
+	def clear(self,y0,x0,y1,x1):
+		self.fill(y0,x0,y1,x1,self.attr|0x20)
+	
+	# Scrolling functions
+	def scroll_area_up(self,y0,y1,n=1):
+		n=min(y1-y0,n)
+		self.poke(y0,0,self.peek(y0+n,0,y1,self.w))
+		self.clear(y1-n,0,y1,self.w)
+	def scroll_area_down(self,y0,y1,n=1):
+		n=min(y1-y0,n)
+		self.poke(y0+n,0,self.peek(y0,0,y1-n,self.w))
+		self.clear(y0,0,y0+n,self.w)
+	def scroll_area_set(self,y0,y1):
+		y0=max(0,min(self.h-1,y0))
+		y1=max(1,min(self.h,y1))
+		if y1>y0:
+			self.scroll_area_y0=y0
+			self.scroll_area_y1=y1
+	def scroll_line_right(self,y,x,n=1):
+		if x<self.w:
+			n=min(self.w-self.cx,n)
+			self.poke(y,x+n,self.peek(y,x,y+1,self.w-n))
+			self.clear(y,x,y+1,x+n)
+	def scroll_line_left(self,y,x,n=1):
+		if x<self.w:
+			n=min(self.w-self.cx,n)
+			self.poke(y,x,self.peek(y,x+n,y+1,self.w))
+			self.clear(y,self.w-n,y+1,self.w)
+
+	# Cursor functions
+	def cursor_line_width(self,next_char):
+		if next_char>=0x400:
+			wx=2
 		else:
-			self.cy=self.cy+1
-	def cursor_right(self):
-		self.cx=self.cx+1
+			wx=1
+		cx=0
+		for x in range(min(self.cx,self.w)):
+			char=self.peek(self.cy,x,self.cy+1,x+1)[0]&0xffff
+			if char>=0x400:
+				wx+=2
+			else:
+				wx+=1
+			if wx<=self.w:
+				cx=x+1
+		return wx,cx
+	def cursor_up(self,n=1):
+		self.cy=max(self.scroll_area_y0,self.cy-n)
+	def cursor_down(self,n=1):
+		self.cy=min(self.scroll_area_y1-1,self.cy+n)
+	def cursor_left(self,n=1):
+		self.cx=max(0,self.cx-n)
+	def cursor_right(self,n=1):
+		self.cx=min(self.w-1,self.cx+n)
+	def cursor_set_x(self,x):
+		self.cx=max(0,x)
+	def cursor_set_y(self,y):
+		self.cy=max(0,min(self.h-1,y))
+	def cursor_set(self,y,x):
+		self.cursor_set_x(x)
+		self.cursor_set_y(y)
+	
+	# Dumb terminal
 	def ctrl_bs(self):
-		delta_y,self.cx=divmod(self.cx-1,self.w)
-		self.cy=max(self.area_y0,self.cy+delta_y)
-	def ctrl_tab(self):
-		tab,sub=divmod(self.cx+8,8)
-		self.cx=min(tab*8,self.w-1)
+		delta_y,cx=divmod(self.cx-1,self.w)
+		cy=max(self.scroll_area_y0,self.cy+delta_y)
+		self.cursor_set(cy,cx)
+	def ctrl_tab(self,n=1):
+		if n>0 and self.cx>=self.w:
+			return
+		if n<=0 and self.cx==0:
+			return
+		ts=0
+		for i in range(len(self.tab_stops)):
+			if self.cx>=self.tab_stops[i]:
+				ts=i
+		ts+=n
+		if ts<len(self.tab_stops) and ts>=0:
+			self.cursor_set_x(self.tab_stops[ts])
+		else:
+			self.cursor_set_x(self.w-1)
 	def ctrl_lf(self):
-		self.cursor_down()
+		if self.cy==self.scroll_area_y1-1:
+			self.scroll_area_up(self.scroll_area_y0,self.scroll_area_y1)
+		else:
+			self.cursor_down()
 	def ctrl_cr(self):
-		self.cx=0
-	def echo(self,char):
-		if self.cx>=self.w:
-			self.ctrl_cr()
+		self.cursor_set_x(0)
+	def ctrl_dumb(self,char):
+		if char==8:
+			self.ctrl_bs()
+		elif char==9:
+			self.ctrl_tab()
+		elif char>=10 and char<=12:
 			self.ctrl_lf()
+		elif char==13:
+			self.ctrl_cr()
+	def echo(self,char):
+		# Check right bound
+		wx,cx=self.cursor_line_width(char)
+		# Newline
+		if wx>self.w:
+			if self.vt100_mode_autowrap:
+				self.ctrl_cr()
+				self.ctrl_lf()
+			else:
+				self.cx=cx
+		if self.vt100_mode_insert:
+			self.scroll_line_right(self.cy,self.cx)
 		self.poke(self.cy,self.cx,array.array('i',[self.attr|char]))
-		self.cursor_right()
-		if char>=0x400:
-			# Double width characters
-			self.cursor_right()
-			
-	# ECMA-48 terminal
-	def ctrl_esc(self,char):
-		return False
+		self.cursor_set_x(self.cx+1)
+		
+	# VT-100 terminal
+	def esc_DECALN(self):
+		# Screen alignment display
+		self.fill(0,0,self.h,self.w,0x00fe0045)
+	def esc_SCP(self):
+		# Store cursor position
+		self.vt100_saved_cx=self.cx
+		self.vt100_saved_cy=self.cy
+		self.vt100_saved_attr=self.attr
+		self.vt100_saved_mode_autowrap=self.vt100_mode_autowrap
+		self.vt100_saved_mode_origin=self.vt100_mode_origin
+	def esc_RCP(self):
+		# Retore cursor position
+		self.cx=self.vt100_saved_cx
+		self.cy=self.vt100_saved_cy
+		self.attr=self.vt100_saved_attr
+		self.vt100_mode_autowrap=self.vt100_saved_mode_autowrap
+		self.vt100_mode_origin=self.vt100_saved_mode_origin
+	def esc_NEL(self):
+		# Next line
+		self.ctrl_cr()
+		self.ctrl_lf()
+	def esc_RI(self):
+		# Reverse line feed
+		if self.cy==self.scroll_area_y0:
+			self.scroll_area_down(self.scroll_area_y0,self.scroll_area_y1)
+		else:
+			self.cursor_up()
+	def csi_ICH(self,p):
+		# Insert character
+		p=self.vt100_parse_params(p,[1])
+		self.scroll_line_right(self.cy,self.cx, p[0])
+	def csi_CUU(self,p):
+		# Cursor up
+		p=self.vt100_parse_params(p,[1])
+		self.cursor_up(max(1,p[0]))
+	def csi_CUD(self,p):
+		# Cursor down
+		p=self.vt100_parse_params(p,[1])
+		self.cursor_down(max(1,p[0]))
+	def csi_CUF(self,p):
+		# Cursor right
+		p=self.vt100_parse_params(p,[1])
+		self.cursor_right(max(1,p[0]))
+	def csi_CUB(self,p):
+		# Cursor left
+		p=self.vt100_parse_params(p,[1])
+		self.cursor_left(max(1,p[0]))
+	def csi_CNL(self,p):
+		# Cursor next line
+		self.csi_CUD(p)
+		self.ctrl_cr()
+	def csi_CPL(self,p):
+		# Cursor preceding line
+		self.csi_CUU(p)
+		self.ctrl_cr()
+	def csi_CHA(self,p):
+		# Cursor character absolute
+		p=self.vt100_parse_params(p,[1])
+ 		self.cursor_set_x(p[0]-1)
+	def csi_CUP(self,p):
+		# Set cursor position
+		p=self.vt100_parse_params(p,[1,1])
+		if self.vt100_mode_origin:
+			self.cursor_set(self.scroll_area_y0+p[0]-1,p[1]-1)
+		else:
+			self.cursor_set(p[0]-1,p[1]-1)
+	def csi_ED(self,p):
+		# Erase in page
+		p=self.vt100_parse_params(p,['0'],False)
+		if p[0]=='0':
+			self.clear(self.cy,self.cx,self.h,self.w)
+		elif p[0]=='1':
+			self.clear(0,0,self.cy+1,self.cx+1)
+		elif p[0]=='2':
+			self.clear(0,0,self.h,self.w)
+	def csi_EL(self,p):
+		# Erase in line
+		p=self.vt100_parse_params(p,['0'],False)
+		if p[0]=='0':
+			self.clear(self.cy,self.cx,self.cy+1,self.w)
+		elif p[0]=='1':
+			self.clear(self.cy,0,self.cy+1,self.cx+1)
+		elif p[0]=='2':
+			self.clear(self.cy,0,self.cy+1,self.w)
+	def csi_IL(self,p):
+		# Insert line
+		p=self.vt100_parse_params(p,[1])
+		if (self.cy>=self.scroll_area_y0 and self.cy<self.scroll_area_y1):
+			self.scroll_area_down(self.cy,self.scroll_area_y1,max(1,p[0]))
+	def csi_DL(self,p):
+		# Delete line
+		p=self.vt100_parse_params(p,[1])
+		if (self.cy>=self.scroll_area_y0 and self.cy<self.scroll_area_y1):
+			self.scroll_area_up(self.cy,self.scroll_area_y1,max(1,p[0]))	
+	def csi_DCH(self,p):
+		# Delete characters
+		p=self.vt100_parse_params(p,[1])
+		self.scroll_line_left(self.cy,self.cx,max(1,p[0]))
+	def csi_CTC(self,p):
+		# Cursor tabulation control
+		p=self.vt100_parse_params(p,['0'],False)
+		for m in p:
+			if m=='0':
+				try:
+					ts=self.tab_stops.index(self.cx)
+				except ValueError:
+					tab_stops=self.tab_stops
+					tab_stops.append(self.cx)
+					tab_stops.sort()
+					self.tab_stops=tab_stops
+			elif m=='2':
+				try:
+					self.tab_stops.remove(self.cx)
+				except ValueError:
+					pass
+			elif m=='5':
+				self.tab_stops=[0]
+	def csi_ECH(self,p):
+		# Erase character
+		p=self.vt100_parse_params(p,[1])
+		n=min(self.w-self.cx,max(1,p[0]))
+		self.clear(self.cy,self.cx,self.cy+1,self.cx+n);
+	def csi_CHT(self,p):
+		# Cursor forward tabulation
+		p=self.vt100_parse_params(p,[1])
+		self.ctrl_tab(max(1,p[0]))
+	def csi_CBT(self,p):
+		# Cursor backward tabulation
+		p=self.vt100_parse_params(p,[1])
+		self.ctrl_tab(1-max(1,p[0]))
+	def csi_HPA(self,p):
+		# Character position absolute
+		p=self.vt100_parse_params(p,[1])
+		self.cursor_set_x(p[0]-1)
+	def csi_HPR(self,p):
+		# Character position forward
+		self.csi_CUF(p)
+	def csi_DA(self,p):
+		# Device attributes
+		p=self.vt100_parse_params(p,['0'],False)
+		if p[0]=='0':
+			self.vt100_out="\x1b[?1;2c"
+		elif p[0]=='>0' or p[0]=='>':
+			self.vt100_out="\x1b[>0;184;0c"
+	def csi_VPA(self,p):
+		# Line position absolute
+		p=self.vt100_parse_params(p,[1])
+		self.cursor_set_y(p[0]-1)
+	def csi_VPR(self,p):
+		# Line position forward
+		self.csi_CUD(p)
+	def csi_HVP(self,p):
+		# Character and line position
+		self.csi_CUP(p)
+	def csi_TBC(self,p):
+		# Tabulation clear
+		p=self.vt100_parse_params(p,['0'],False)
+		if p[0]=='0':
+			self.csi_CTC('2')
+		elif p[0]=='3':
+			self.csi_CTC('5')
+	def csi_SM(self,p):
+		# Set mode
+		p=self.vt100_parse_params(p,[],False)
+		for m in p:
+			if m=='4':
+				# Insertion replacement mode
+				self.vt100_mode_insert=True
+			elif m=='?3':
+				# Column mode
+				if self.vt100_mode_column_switch:
+					self.w=132
+					self.reset()
+			elif m=='?5':
+				# Screen mode
+				self.vt100_mode_inverse=True
+			elif m=='?6':
+				# Region origin mode
+				self.vt100_mode_origin=True
+			elif m=='?7':
+				# Autowrap mode
+				self.vt100_mode_autowrap=True
+			elif m=='?25':
+				# Text cursor enable mode
+				self.vt100_mode_cursor=True
+			elif m=='?40':
+				# Column switch control
+				self.vt100_mode_column_switch=True
+			elif m=='?47':
+				# Alternate screen mode
+				if not self.vt100_mode_alt_screen:
+					self.screen,self.screen2=self.screen2,self.screen
+				self.vt100_mode_alt_screen=True
+	def csi_RM(self,p):
+		# Reset mode
+		p=self.vt100_parse_params(p,[],False)
+		for m in p:
+			if m=='4':
+				# Insertion replacement mode
+				self.vt100_mode_insert=False
+			elif m=='?3':
+				# Column mode
+				if self.vt100_mode_column_switch:
+					self.w=80
+					self.reset()
+			elif m=='?5':
+				# Screen mode
+				self.vt100_mode_inverse=False
+			elif m=='?6':
+				# Region origin mode
+				self.vt100_mode_origin=False
+			elif m=='?7':
+				# Autowrap mode
+				self.vt100_mode_autowrap=False
+			elif m=='?25':
+				# Text cursor enable mode
+				self.vt100_mode_cursor=False
+			elif m=='?40':
+				# Column switch control
+				self.vt100_mode_column_switch=False
+			elif m=='?47':
+				# Alternate screen mode
+				if self.vt100_mode_alt_screen:
+					self.screen,self.screen2=self.screen2,self.screen
+				self.vt100_mode_alt_screen=False
+	def csi_SGR(self,p):
+		# Select graphic rendition
+		p=self.vt100_parse_params(p,[0])
+		for m in p:
+			if m==0:
+				# Reset
+				self.attr=0x00fe0000
+			elif m==4:
+				# Underlined
+				self.attr|=0x01000000
+			elif m==7:
+				# Negative
+				self.attr|=0x02000000
+			elif m==8:
+				# Concealed
+				self.attr|=0x04000000
+			elif m==24:
+				# Not underlined
+				self.attr&=0x7eff0000
+			elif m==27:
+				# Positive
+				self.attr&=0x7dff0000
+			elif m==28:
+				# Revealed
+				self.attr&=0x7bff0000
+			elif m>=30 and m<=37:
+				# Foreground
+				self.attr=(self.attr&0x7f0f0000)|((m-30)<<20)
+			elif m==39:
+				# Default fg color
+				self.attr=(self.attr&0x7f0f0000)|0x00f00000
+			elif m>=40 and m<=47:
+				# Background
+				self.attr=(self.attr&0x7ff00000)|((m-40)<<16)
+			elif m==49:
+				# Default bg coor
+				self.attr=(self.attr&0x7ff00000)|0x000e0000
+	def csi_DSR(self,p):
+		# Device status report
+		p=self.vt100_parse_params(p,['0'],False)
+		if p[0]=='5':
+			self.vt100_out="\x1b[0n"
+		elif p[0]=='6':
+			x=self.cx+1
+			y=self.cy+1
+			self.vt100_out='\x1b[%d;%dR'%(y,x)	
+		elif p[0]=='7':
+			self.vt100_out="WebShell"
+		elif p[0]=='8':
+			self.vt100_out=version
+	def csi_DECSTBM(self,p):
+		# Set top and bottom margins
+		p=self.vt100_parse_params(p,[1,self.h])
+		self.scroll_area_set(p[0]-1,p[1])
+		if self.vt100_mode_origin:
+			self.cursor_set(self.scroll_area_y0,0)
+		else:
+			self.cursor_set(0,0)
+	def csi_DECREQTPARM(self,p):
+		# Request terminal parameters
+		p=self.vt100_parse_params(p,[],False)
+		if p[0]=='0':
+			self.vt100_out="\x1b[2;1;1;112;112;1;0x"
+		elif p[0]=='1':
+			self.vt100_out="\x1b[3;1;1;112;112;1;0x"
+	def vt100_parse_params(self,p,d,to_int=True):
+		# Process parameters (params p with defaults d)
+		prefix=''
+		if len(p)>0:
+			if p[0]>='<' and p[0]<='?':
+				prefix=p[0]
+				p=p[1:]
+			p=p.split(';')
+		else:
+			p=''
+		n=max(len(p),len(d))
+		o=[]
+		for i in range(n):
+			value_def=False
+			if i<len(p):
+				value=prefix+p[i]
+				value_def=True
+				if to_int:
+					try:
+						value=int(value)
+					except ValueError:
+						value_def=False
+			if (not value_def) and i<len(d):
+				value=d[i]
+			o.append(value)
+		return o
+	def vt100_parse_reset(self,vt100_parse_state="",vt100_parse_len=0):
+		self.vt100_parse_len=vt100_parse_len
+		self.vt100_parse_state=vt100_parse_state
+		self.vt100_parse_func=""
+		self.vt100_parse_param=""
+		return True
+	def vt100_process(self):
+		if self.vt100_parse_state=='esc':
+			# ESC mode
+			f=self.vt100_parse_func
+			if f!='[':
+				print 'ESC code: ',f
+			if f=='[':
+				return self.vt100_parse_reset('csi',1)
+			elif f=='#8':
+				self.esc_DECALN()
+			elif f=='7':
+				self.esc_SCP()
+			elif f=='8':
+				self.esc_RCP()
+			elif f=='D':
+				self.ctrl_lf()
+			elif f=='E':
+				self.esc_NEL()
+			elif f=='H':
+				self.csi_CTC('0')
+			elif f=='M':
+				self.esc_RI()
+			elif f=='Z':
+				self.csi_DA('0')
+			elif f=='c':
+				self.init()
+				self.reset()
+		else:
+			# CSI mode
+			f=self.vt100_parse_func
+			p=self.vt100_parse_param
+			print 'CSI code: ',p,f
+			if f=='@':
+				self.csi_ICH(p)
+			elif f=='A':
+				self.csi_CUU(p)
+			elif f=='B':
+				self.csi_CUD(p)
+			elif f=='C':
+				self.csi_CUF(p)
+			elif f=='D':
+				self.csi_CUB(p)
+			elif f=='E':
+				self.csi_CNL(p)
+			elif f=='F':
+				self.csi_CPL(p)
+			elif f=='G':
+				self.csi_CHA(p)
+			elif f=='H':
+				self.csi_CUP(p)
+			elif f=='I':
+				self.csi_CHT(p)
+			elif f=='J':
+				self.csi_ED(p)
+			elif f=='K':
+				self.csi_EL(p)
+			elif f=='L':
+				self.csi_IL(p)
+			elif f=='M':
+				self.csi_DL(p)
+			elif f=='P':
+				self.csi_DCH(p)
+			elif f=='W':
+				self.csi_CTC(p)
+			elif f=='X':
+				self.csi_ECH(p)
+			elif f=='Z':
+				self.csi_CBT(p)
+			elif f=='`':
+				self.csi_HPA(p)
+			elif f=='a':
+				self.csi_HPR(p)
+			elif f=='c':
+				self.csi_DA(p)
+			elif f=='d':
+				self.csi_VPA(p)
+			elif f=='e':
+				self.csi_VPR(p)
+			elif f=='f':
+				self.csi_HVP(p)
+			elif f=='g':
+				self.csi_TBC(p)
+			elif f=='h':
+				self.csi_SM(p)
+			elif f=='l':
+				self.csi_RM(p)
+			elif f=='m':
+				self.csi_SGR(p)
+			elif f=='n':
+				self.csi_DSR(p)
+			elif f=='r':
+				self.csi_DECSTBM(p)
+			elif f=='s':
+				self.esc_SCP()
+			elif f=='u':
+				self.esc_RCP()
+			elif f=='x':
+				self.csi_DECREQTPARM(p)
+			else:
+				print 'Unknown'
+		return self.vt100_parse_reset()
+	def ctrl_vt100(self,char):
+		if char==27:
+			self.vt100_parse_reset('esc')
+		elif char>=0x80 and char<=0x9f:
+			self.vt100_parse_reset('esc')
+			self.vt100_parse_func=chr(char-0x40)
+			self.vt100_process()
+		elif self.vt100_parse_state:
+			self.vt100_parse_len+=1
+			if self.vt100_parse_len>32:
+				self.vt100_parse_reset()
+			char_msb=char&0xf0
+			if char_msb<0x20:
+				pass
+			elif char_msb==0x20:
+				# Intermediate bytes (added to function)
+				self.vt100_parse_func+=unichr(char)
+			elif char_msb==0x30 and self.vt100_parse_state=='csi':
+				# Parameter byte
+				self.vt100_parse_param+=unichr(char)
+			else:
+				# Function byte
+				self.vt100_parse_func+=unichr(char)
+				self.vt100_process()
+		else:
+			return False
+		return True
 
 	# External interface
 	def set_size(self,w,h):
-		if w<2 or w>256 or h<2 or h>256:
-			return False
-		self.w=w
-		self.h=h
-		reset()
+#		if w<2 or w>256 or h<2 or h>256:
+#			return False
+#		self.w=w
+#		self.h=h
+#		reset()
 		return True
 	def read(self):
-		d=self.ctrl_out
-		self.ctrl_out=""
+		d=self.vt100_out
+		self.vt100_out=""
 		return d
 	def write(self,d):
+		f=open('/tmp/out.txt','a')
+		f.write(d)
+		f.close()
 		try:
 			d=unicode(d,'utf-8')
 		except UnicodeDecodeError:
 			return False
 		for c in d:
 			char = ord(c)
-			if char==8:
-				self.ctrl_bs()
-			elif char==9:
-				self.ctrl_tab()
-			elif char==10:
-				self.ctrl_lf()
-			elif char==13:
-				self.ctrl_cr()
-			elif not self.ctrl_esc(char):
-				if char>=0x20 and char<=0xffff:
+			if not self.ctrl_vt100(char):
+				if char<32:
+					self.ctrl_dumb(char)
+				elif char<=0xffff:
 					self.echo(char)
 		return True
 	def dump(self):
 		pre=u""
-		bg_,fg_=-1,-1
-		cx=min(self.cx,self.w-1)
-		cy=self.cy
-		is_wide=False
+		attr_=-1
+		cx,cy=min(self.cx,self.w-1),self.cy
 		for y in range(0,self.h):
+			wx=0
 			for x in range(0,self.w):
-				if is_wide:
-					is_wide=False
-					continue
-				attr,char=divmod(self.screen[y*self.w+x],0x10000)
-				fg,bg=divmod(attr,0x10)
+				d=self.screen[y*self.w+x]
+				char=d&0xffff
+				attr=d>>16
 				# Cursor
-				if cy==y and cx==x:
-					bg=8
-				# Color
-				if fg!=fg_ or bg!=bg_:
-					if x>0 or y>0:
+				if cy==y and cx==x and self.vt100_mode_cursor:
+					attr=attr&0xfff0|0x000c
+				# Attributes
+				if attr!=attr_:
+					if attr_!=-1:
 						pre+=u'</span>'
-					pre+=u'<span class="f%x b%x">'%(fg,bg)
-					fg_,bg_=fg,bg
+					bg=attr&0x000f
+					fg=(attr&0x00f0)>>4
+					inv=attr&0x0200
+					inv2=self.vt100_mode_inverse
+					if (inv and not inv2) or (inv2 and not inv):
+						fg,bg=bg,fg
+					if attr&0x0400:
+						fg=0xc
+					if attr&0x0100:
+						ul=' ul'
+					else:
+						ul=''
+					pre+=u'<span class="f%x b%x%s">'%(fg,bg,ul)
+					attr_=attr
 				# Escape HTML characters
 				if char==38:
 					pre+='&amp;'
@@ -148,9 +703,12 @@ class Terminal:
 				elif char==62:
 					pre+='&gt;'
 				else:
-					pre+=unichr(char)
 					if char>=0x400:
-						is_wide=True
+						wx+=2
+					else:
+						wx+=1
+					if wx<=self.w:
+						pre+=unichr(char)
 			pre+="\n"
 		# Encode in UTF-8
 		pre=pre.encode('utf-8')
@@ -340,7 +898,7 @@ class Multiplex:
 			fd2sid={}
 			for sid in self.session.keys():
 				then=self.session[sid]['time']
-				if (now-then)>10:
+				if (now-then)>120:
 					self.proc_kill(sid)
 				else:
 					if self.session[sid]['state']=='alive':
