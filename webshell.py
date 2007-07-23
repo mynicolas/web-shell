@@ -851,7 +851,7 @@ class Multiplex:
 					os._exit(0)
 			# Safe way to make it work under BSD and Linux
 			ls=os.environ['LANG'].split('.')
-			if len(ls)<2
+			if len(ls)<2:
 				ls=['en_US','UTF-8']
 			try:
 				os.putenv('COLUMNS',str(w))
