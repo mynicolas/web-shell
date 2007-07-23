@@ -33,6 +33,10 @@ class Terminal:
 		# Scroll parameters
 		self.scroll_area_y0=0
 		self.scroll_area_y1=self.h
+		# UTF-8 decoder
+		self.utf8_units_count=0
+		self.utf8_units_received=0
+		self.utf8_char=0
 		# Character map
 		self.vt100_charmap=0
 		# Modes
@@ -72,40 +76,41 @@ class Terminal:
 
 	# UTF-8 functions
 	def utf8_decode(self, d):
+#		try:
+#			d=unicode(d,'utf-8')
+#		except UnicodeDecodeError:
+
 		o=''
-		units_count=0
-		units_received=0
-		
 		for c in d:
 			char=ord(c)
-			if units_count!=units_received:
-				units_received+=1
+			if self.utf8_units_count!=self.utf8_units_received:
+				self.utf8_units_received+=1
 				if (char&0xc0)==0x80:
-					next_char=(next_char<<6)|(char&0x3f)
-					if units_count==units_received:
-						o+=unichr(next_char)
-						units_count=units_received=0
+					self.utf8_char=(self.utf8_char<<6)|(char&0x3f)
+					if self.utf8_units_count==self.utf8_units_received:
+						o+=unichr(self.utf8_char)
+						self.utf8_units_count=self.utf8_units_received=0
 				else:
 					o+='?'
-					while units_received:
+					while self.utf8_units_received:
 						o+='?'
-						units_received-=1
-					units_count=0
+						self.utf8_units_received-=1
+					self.utf8_units_count=0
 			else:
 				if (char&0x80)==0x00:
 					o+=c
 				elif (char&0xe0)==0xc0:
-					units_count=1
-					next_char=char&0x1f
+					self.utf8_units_count=1
+					self.utf8_char=char&0x1f
 				elif (char&0xf0)==0xe0:
-					units_count=2
-					next_char=char&0x0f
+					self.utf8_units_count=2
+					self.utf8_char=char&0x0f
 				elif (char&0xf8)==0xf0:
-					units_count=3
-					next_char=char&0x07
+					self.utf8_units_count=3
+					self.utf8_char=char&0x07
 				else:
 					o+='?'
-					units_count=0
+					self.utf8_units_count=0
 		return o
 	def utf8_charwidth(self,char):
 		if char>=0x2e80:
@@ -736,12 +741,9 @@ class Terminal:
 		self.vt100_out=""
 		return d
 	def write(self,d):
-		try:
-			d=unicode(d,'utf-8')
-		except UnicodeDecodeError:
-			d=self.utf8_decode(d)
+		d=self.utf8_decode(d)
 		for c in d:
-			char = ord(c)
+			char=ord(c)
 			if not self.vt100_write(char):
 				if char<32:
 					self.dumb_write(char)
