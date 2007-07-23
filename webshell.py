@@ -19,9 +19,10 @@ class Terminal:
 	def __init__(self,w,h):
 		self.w=w
 		self.h=h
-		self.init()
-		self.reset()
-	def init(self):
+		self.reset_hard()
+		
+	# Reset functions
+	def reset_hard(self):
 		# Attribute mask: 0x0XFB0000
 		#  X: Bit 0 - Underlined
 		#     Bit 1 - Negative
@@ -58,6 +59,7 @@ class Terminal:
 		self.vt100_out=""
 		# Caches
 		self.dump_cache=""
+		self.reset()
 	def reset(self):
 		# Screen
 		self.screen=array.array('i',[self.attr|0x20]*self.w*self.h)
@@ -67,6 +69,50 @@ class Terminal:
 		self.cy=0
 		# Tab stops
 		self.tab_stops=range(0,self.w,8)
+
+	# UTF-8 functions
+	def utf8_decode(self, d):
+		o=''
+		units_count=0
+		units_received=0
+		
+		for c in d:
+			char=ord(c)
+			if units_count!=units_received:
+				units_received+=1
+				if (char&0xc0)==0x80:
+					next_char=(next_char<<6)|(char&0x3f)
+					if units_count==units_received:
+						o+=unichr(next_char)
+						units_count=units_received=0
+				else:
+					o+='?'
+					while units_received:
+						o+='?'
+						units_received-=1
+					units_count=0
+			else:
+				if (char&0x80)==0x00:
+					o+=c
+				elif (char&0xe0)==0xc0:
+					units_count=1
+					next_char=char&0x1f
+				elif (char&0xf0)==0xe0:
+					units_count=2
+					next_char=char&0x0f
+				elif (char&0xf8)==0xf0:
+					units_count=3
+					next_char=char&0x07
+				else:
+					o+='?'
+					units_count=0
+		return o
+	def utf8_charwidth(self,char):
+		if char>=0x2e80:
+			return 2
+		else:
+			return 1
+		
 	# Low-level terminal functions
 	def peek(self,y0,x0,y1,x1):
 		return self.screen[self.w*y0+x0:self.w*(y1-1)+x1]
@@ -107,19 +153,11 @@ class Terminal:
 
 	# Cursor functions
 	def cursor_line_width(self,next_char):
-		if next_char>=0x400:
-			wx=2
-		else:
-			wx=1
+		wx=self.utf8_charwidth(next_char)
 		cx=0
 		for x in range(min(self.cx,self.w)):
 			char=self.peek(self.cy,x,self.cy+1,x+1)[0]&0xffff
-			if char>=0x400:
-				wx+=2
-			else:
-				wx+=1
-			if wx<=self.w:
-				cx=x+1
+			wx+=self.utf8_charwidth(char)
 		return wx,cx
 	def cursor_up(self,n=1):
 		self.cy=max(self.scroll_area_y0,self.cy-n)
@@ -165,7 +203,7 @@ class Terminal:
 			self.cursor_down()
 	def ctrl_CR(self):
 		self.cursor_set_x(0)
-	def ctrl_dumb(self,char):
+	def dumb_write(self,char):
 		if char==8:
 			self.ctrl_BS()
 		elif char==9:
@@ -174,7 +212,7 @@ class Terminal:
 			self.ctrl_LF()
 		elif char==13:
 			self.ctrl_CR()
-	def echo(self,char):
+	def dumb_echo(self,char):
 		# Check right bound
 		wx,cx=self.cursor_line_width(char)
 		# Newline
@@ -570,15 +608,14 @@ class Terminal:
 				self.csi_CTC('0')
 			elif f=='M':
 				self.esc_RI()
-			elif f=='O':
-				self.esc_SS2()
 			elif f=='N':
+				self.esc_SS2()
+			elif f=='O':
 				self.esc_SS3()
 			elif f=='Z':
 				self.csi_DA('0')
 			elif f=='c':
-				self.init()
-				self.reset()
+				self.reset_hard()
 		else:
 			# CSI mode
 			f=self.vt100_parse_func
@@ -653,7 +690,7 @@ class Terminal:
 #			else:
 #				print 'Unknown'
 		return self.vt100_parse_reset()
-	def ctrl_vt100(self,char):
+	def vt100_write(self,char):
 		if char<32:
 			if char==27:
 				self.vt100_parse_reset('esc')
@@ -699,20 +736,17 @@ class Terminal:
 		self.vt100_out=""
 		return d
 	def write(self,d):
-		f=open('/tmp/out.txt','a')
-		f.write(d)
-		f.close()
 		try:
 			d=unicode(d,'utf-8')
 		except UnicodeDecodeError:
-			return False
+			d=self.utf8_decode(d)
 		for c in d:
 			char = ord(c)
-			if not self.ctrl_vt100(char):
+			if not self.vt100_write(char):
 				if char<32:
-					self.ctrl_dumb(char)
+					self.dumb_write(char)
 				elif char<=0xffff:
-					self.echo(char)
+					self.dumb_echo(char)
 		return True
 	def dump(self):
 		pre=u""
@@ -753,10 +787,7 @@ class Terminal:
 				elif char==62:
 					pre+='&gt;'
 				else:
-					if char>=0x400:
-						wx+=2
-					else:
-						wx+=1
+					wx+=self.utf8_charwidth(char)
 					if wx<=self.w:
 						pre+=unichr(char)
 			pre+="\n"
