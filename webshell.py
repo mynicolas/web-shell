@@ -532,8 +532,8 @@ class Terminal:
 		if self.vt100_parse_state=='esc':
 			# ESC mode
 			f=self.vt100_parse_func
-			if f!='[':
-				print 'ESC code: ',f
+#			if f!='[':
+#				print 'ESC code: ',f
 			if f=='[':
 				return self.vt100_parse_reset('csi',1)
 			elif f=='#8':
@@ -583,7 +583,7 @@ class Terminal:
 			# CSI mode
 			f=self.vt100_parse_func
 			p=self.vt100_parse_param
-			print 'CSI code: ',p,f
+#			print 'CSI code: ',p,f
 			if f=='@':
 				self.csi_ICH(p)
 			elif f=='A':
@@ -650,8 +650,8 @@ class Terminal:
 				self.esc_RCP()
 			elif f=='x':
 				self.csi_DECREQTPARM(p)
-			else:
-				print 'Unknown'
+#			else:
+#				print 'Unknown'
 		return self.vt100_parse_reset()
 	def ctrl_vt100(self,char):
 		if char<32:
@@ -850,11 +850,15 @@ class Multiplex:
 				else:
 					os._exit(0)
 			# Safe way to make it work under BSD and Linux
+			ls=os.environ['LANG'].split('.')
+			if len(ls)<2
+				ls=['en_US','UTF-8']
 			try:
 				os.putenv('COLUMNS',str(w))
 				os.putenv('LINES',str(h))
 				os.putenv('TERM','linux')
 				os.putenv('PATH',os.environ['PATH'])
+				os.putenv('LANG',ls[0]+'.UTF-8')
 				os.system(cmd)
 			except (IOError,OSError):
 				pass
