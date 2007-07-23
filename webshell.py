@@ -79,7 +79,6 @@ class Terminal:
 #		try:
 #			d=unicode(d,'utf-8')
 #		except UnicodeDecodeError:
-
 		o=''
 		for c in d:
 			char=ord(c)
@@ -88,7 +87,8 @@ class Terminal:
 				if (char&0xc0)==0x80:
 					self.utf8_char=(self.utf8_char<<6)|(char&0x3f)
 					if self.utf8_units_count==self.utf8_units_received:
-						o+=unichr(self.utf8_char)
+						if self.utf8_char<0x10000:
+							o+=unichr(self.utf8_char)
 						self.utf8_units_count=self.utf8_units_received=0
 				else:
 					o+='?'
