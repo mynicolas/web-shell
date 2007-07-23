@@ -850,7 +850,10 @@ class Multiplex:
 				else:
 					os._exit(0)
 			# Safe way to make it work under BSD and Linux
-			ls=os.environ['LANG'].split('.')
+			try:
+				ls=os.environ['LANG'].split('.')
+			except KeyError:
+				ls=[]
 			if len(ls)<2:
 				ls=['en_US','UTF-8']
 			try:
