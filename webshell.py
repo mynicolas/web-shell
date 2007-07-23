@@ -3,7 +3,7 @@
 """ WebShell Server """
 """ Released under the GPL 2.0 by Marc S. Ressl """
 
-version="0.5.4"
+version="0.7.0"
 
 import array,time,glob,optparse,random,re
 import os,sys,pty,signal,select,commands,threading,fcntl,termios,struct,pwd
@@ -32,11 +32,14 @@ class Terminal:
 		# Scroll parameters
 		self.scroll_area_y0=0
 		self.scroll_area_y1=self.h
+		# Character map
+		self.vt100_charmap=0
 		# Modes
 		self.vt100_mode_insert=False
 		self.vt100_mode_inverse=False
 		self.vt100_mode_origin=False
 		self.vt100_mode_autowrap=True
+		self.vt100_mode_lfnewline=False
 		self.vt100_mode_cursor=True
 		self.vt100_mode_alt_screen=False
 		self.vt100_mode_column_switch=False
@@ -44,8 +47,8 @@ class Terminal:
 		self.vt100_saved_cx=0
 		self.vt100_saved_cy=0
 		self.vt100_saved_attr=self.attr
+		self.vt100_saved_charmap=self.vt100_charmap
 		self.vt100_saved_mode_origin=self.vt100_mode_origin
-		self.vt100_saved_mode_autowrap=self.vt100_mode_autowrap
 		# Control sequences
 		self.vt100_parse_len=0
 		self.vt100_parse_state=""
@@ -135,11 +138,11 @@ class Terminal:
 		self.cursor_set_y(y)
 	
 	# Dumb terminal
-	def ctrl_bs(self):
+	def ctrl_BS(self):
 		delta_y,cx=divmod(self.cx-1,self.w)
 		cy=max(self.scroll_area_y0,self.cy+delta_y)
 		self.cursor_set(cy,cx)
-	def ctrl_tab(self,n=1):
+	def ctrl_HT(self,n=1):
 		if n>0 and self.cx>=self.w:
 			return
 		if n<=0 and self.cx==0:
@@ -153,30 +156,32 @@ class Terminal:
 			self.cursor_set_x(self.tab_stops[ts])
 		else:
 			self.cursor_set_x(self.w-1)
-	def ctrl_lf(self):
+	def ctrl_LF(self):
+		if self.vt100_mode_lfnewline:
+			ctrl_CR()
 		if self.cy==self.scroll_area_y1-1:
 			self.scroll_area_up(self.scroll_area_y0,self.scroll_area_y1)
 		else:
 			self.cursor_down()
-	def ctrl_cr(self):
+	def ctrl_CR(self):
 		self.cursor_set_x(0)
 	def ctrl_dumb(self,char):
 		if char==8:
-			self.ctrl_bs()
+			self.ctrl_BS()
 		elif char==9:
-			self.ctrl_tab()
+			self.ctrl_HT()
 		elif char>=10 and char<=12:
-			self.ctrl_lf()
+			self.ctrl_LF()
 		elif char==13:
-			self.ctrl_cr()
+			self.ctrl_CR()
 	def echo(self,char):
 		# Check right bound
 		wx,cx=self.cursor_line_width(char)
 		# Newline
 		if wx>self.w:
 			if self.vt100_mode_autowrap:
-				self.ctrl_cr()
-				self.ctrl_lf()
+				self.ctrl_CR()
+				self.ctrl_LF()
 			else:
 				self.cx=cx
 		if self.vt100_mode_insert:
@@ -185,6 +190,12 @@ class Terminal:
 		self.cursor_set_x(self.cx+1)
 		
 	# VT-100 terminal
+	def charset_select(self,G):
+		# Select charset
+		pass
+	def charset_set(self,G,sel):
+		# Set charset
+		pass
 	def esc_DECALN(self):
 		# Screen alignment display
 		self.fill(0,0,self.h,self.w,0x00fe0045)
@@ -193,19 +204,21 @@ class Terminal:
 		self.vt100_saved_cx=self.cx
 		self.vt100_saved_cy=self.cy
 		self.vt100_saved_attr=self.attr
-		self.vt100_saved_mode_autowrap=self.vt100_mode_autowrap
+		self.vt100_saved_charmap=self.vt100_charmap
 		self.vt100_saved_mode_origin=self.vt100_mode_origin
 	def esc_RCP(self):
 		# Retore cursor position
 		self.cx=self.vt100_saved_cx
 		self.cy=self.vt100_saved_cy
 		self.attr=self.vt100_saved_attr
-		self.vt100_mode_autowrap=self.vt100_saved_mode_autowrap
+		self.vt100_charmap=self.vt100_saved_charmap
 		self.vt100_mode_origin=self.vt100_saved_mode_origin
+	def esc_IND(self):
+		self.ctrl_LF()
 	def esc_NEL(self):
 		# Next line
-		self.ctrl_cr()
-		self.ctrl_lf()
+		self.ctrl_CR()
+		self.ctrl_LF()
 	def esc_RI(self):
 		# Reverse line feed
 		if self.cy==self.scroll_area_y0:
@@ -235,11 +248,11 @@ class Terminal:
 	def csi_CNL(self,p):
 		# Cursor next line
 		self.csi_CUD(p)
-		self.ctrl_cr()
+		self.ctrl_CR()
 	def csi_CPL(self,p):
 		# Cursor preceding line
 		self.csi_CUU(p)
-		self.ctrl_cr()
+		self.ctrl_CR()
 	def csi_CHA(self,p):
 		# Cursor character absolute
 		p=self.vt100_parse_params(p,[1])
@@ -252,7 +265,7 @@ class Terminal:
 		else:
 			self.cursor_set(p[0]-1,p[1]-1)
 	def csi_ED(self,p):
-		# Erase in page
+		# Erase in display
 		p=self.vt100_parse_params(p,['0'],False)
 		if p[0]=='0':
 			self.clear(self.cy,self.cx,self.h,self.w)
@@ -310,11 +323,11 @@ class Terminal:
 	def csi_CHT(self,p):
 		# Cursor forward tabulation
 		p=self.vt100_parse_params(p,[1])
-		self.ctrl_tab(max(1,p[0]))
+		self.ctrl_HT(max(1,p[0]))
 	def csi_CBT(self,p):
 		# Cursor backward tabulation
 		p=self.vt100_parse_params(p,[1])
-		self.ctrl_tab(1-max(1,p[0]))
+		self.ctrl_HT(1-max(1,p[0]))
 	def csi_HPA(self,p):
 		# Character position absolute
 		p=self.vt100_parse_params(p,[1])
@@ -364,9 +377,13 @@ class Terminal:
 			elif m=='?6':
 				# Region origin mode
 				self.vt100_mode_origin=True
+				self.cursor_set(self.scroll_area_y0,0)
 			elif m=='?7':
 				# Autowrap mode
 				self.vt100_mode_autowrap=True
+			elif m=='?20':
+				# Linefeed/new line mode
+				self.vt100_mode_lfnewline=True
 			elif m=='?25':
 				# Text cursor enable mode
 				self.vt100_mode_cursor=True
@@ -396,9 +413,13 @@ class Terminal:
 			elif m=='?6':
 				# Region origin mode
 				self.vt100_mode_origin=False
+				self.cursor_set(0,0)
 			elif m=='?7':
 				# Autowrap mode
 				self.vt100_mode_autowrap=False
+			elif m=='?20':
+				# Linefeed/new line mode
+				self.vt100_mode_lfnewline=False
 			elif m=='?25':
 				# Text cursor enable mode
 				self.vt100_mode_cursor=False
@@ -517,18 +538,42 @@ class Terminal:
 				return self.vt100_parse_reset('csi',1)
 			elif f=='#8':
 				self.esc_DECALN()
+			elif f=='(A':
+				self.charset_set(1,0)
+			elif f=='(B':
+				self.charset_set(1,1)
+			elif f=='(0':
+				self.charset_set(1,2)
+			elif f=='(1':
+				self.charset_set(1,3)
+			elif f=='(2':
+				self.charset_set(1,4)
+			elif f==')A':
+				self.charset_set(0,0)
+			elif f==')B':
+				self.charset_set(0,1)
+			elif f==')0':
+				self.charset_set(0,2)
+			elif f==')1':
+				self.charset_set(0,3)
+			elif f==')2':
+				self.charset_set(0,4)
 			elif f=='7':
 				self.esc_SCP()
 			elif f=='8':
 				self.esc_RCP()
 			elif f=='D':
-				self.ctrl_lf()
+				self.esc_IND()
 			elif f=='E':
 				self.esc_NEL()
 			elif f=='H':
 				self.csi_CTC('0')
 			elif f=='M':
 				self.esc_RI()
+			elif f=='O':
+				self.esc_SS2()
+			elif f=='N':
+				self.esc_SS3()
 			elif f=='Z':
 				self.csi_DA('0')
 			elif f=='c':
@@ -609,8 +654,13 @@ class Terminal:
 				print 'Unknown'
 		return self.vt100_parse_reset()
 	def ctrl_vt100(self,char):
-		if char==27:
-			self.vt100_parse_reset('esc')
+		if char<32:
+			if char==27:
+				self.vt100_parse_reset('esc')
+			elif char==24 or char==26:
+				self.vt100_parse_reset('')
+			else:
+				return False
 		elif char>=0x80 and char<=0x9f:
 			self.vt100_parse_reset('esc')
 			self.vt100_parse_func=chr(char-0x40)
@@ -777,6 +827,7 @@ class Multiplex:
 			return False
 	def proc_spawn(self,sid):
 		try:
+			w,h=self.session[sid]['w'],self.session[sid]['h']
 			# Fork new process
 			pid,fd=os.forkpty()
 		except (IOError,OSError):
@@ -800,6 +851,10 @@ class Multiplex:
 					os._exit(0)
 			# Safe way to make it work under BSD and Linux
 			try:
+				os.putenv('COLUMNS',str(w))
+				os.putenv('LINES',str(h))
+				os.putenv('TERM','linux')
+				os.putenv('PATH',os.environ['PATH'])
 				os.system(cmd)
 			except (IOError,OSError):
 				pass
