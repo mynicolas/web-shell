@@ -21,6 +21,10 @@ class Terminal:
 		self.h=h
 		self.reset_hard()
 		
+		self.vt100_charset_graph =[0x25ca,0x2026,0x2022,0x3f, 0xb6,0x3f,0xb0,0xb1]
+		self.vt100_charset_graph+=[0x3f,0x3f,0x2b,0x2b, 0x2b,0x2b,0x2b,0xaf]
+		self.vt100_charset_graph+=[0x2014,0x2014,0x2014,0x5f, 0x2b,0x2b,0x2b]
+		self.vt100_charset_graph+=[0x2b, 0x7c,0x2264,0x2265,0xb6, 0x2260,0xa3,0xb7,0x7f]
 	# Reset functions
 	def reset_hard(self):
 		# Attribute mask: 0x0XFB0000
@@ -35,7 +39,10 @@ class Terminal:
 		self.utf8_units_received=0
 		self.utf8_char=0
 		# Character map
-		self.vt100_charmap=0
+		self.vt100_charset_is_single_shift=False
+		self.vt100_charset_is_graphical=False
+		self.vt100_charset_g_sel=0
+		self.vt100_charset_g=[0,0]
 		# Key filter
 		self.vt100_keyfilter_cursorstate=0
 		# Last char
@@ -55,7 +62,7 @@ class Terminal:
 		self.vt100_saved_cx=0
 		self.vt100_saved_cy=0
 		self.vt100_saved_attr=self.attr
-		self.vt100_saved_charmap=self.vt100_charmap
+		self.vt100_saved_charset_g_sel=self.vt100_charset_g_sel
 		self.vt100_saved_mode_origin=self.vt100_mode_origin
 		# Control sequences
 		self.vt100_parse_len=0
@@ -117,7 +124,6 @@ class Terminal:
 					self.utf8_char=char&0x07
 				else:
 					o+='?'
-					self.utf8_units_count=0
 		return o
 	def utf8_charwidth(self,char):
 		if char>=0x2e80:
@@ -216,14 +222,17 @@ class Terminal:
 	def ctrl_CR(self):
 		self.cursor_set_x(0)
 	def dumb_write(self,char):
-		if char==8:
-			self.ctrl_BS()
-		elif char==9:
-			self.ctrl_HT()
-		elif char>=10 and char<=12:
-			self.ctrl_LF()
-		elif char==13:
-			self.ctrl_CR()
+		if char<32:
+			if char==8:
+				self.ctrl_BS()
+			elif char==9:
+				self.ctrl_HT()
+			elif char>=10 and char<=12:
+				self.ctrl_LF()
+			elif char==13:
+				self.ctrl_CR()
+			return True
+		return False
 	def dumb_echo(self,char):
 		# Check right bound
 		wx,cx=self.cursor_line_width(char)
@@ -236,16 +245,30 @@ class Terminal:
 				self.cx=cx
 		if self.vt100_mode_insert:
 			self.scroll_line_right(self.cy,self.cx)
+		if self.vt100_charset_is_single_shift:
+			self.vt100_charset_is_single_shift=False
+		elif self.vt100_charset_is_graphical and (char&0xe0)==0x60:
+			char=self.vt100_charset_graph[char-0x60]
 		self.poke(self.cy,self.cx,array.array('i',[self.attr|char]))
 		self.cursor_set_x(self.cx+1)
 		
 	# VT-100 terminal
-	def charset_select(self,G):
+	def charset_update(self):
+		self.vt100_charset_is_graphical=(self.vt100_charset_g[self.vt100_charset_g_sel]==2)
+	def charset_set(self,g):
+		# Invoke active character set
+		self.vt100_charset_g_sel=g
+		self.charset_update()
+	def charset_select(self,g,charset):
 		# Select charset
-		pass
-	def charset_set(self,G,sel):
-		# Set charset
-		pass
+		self.vt100_charset_g[g]=charset
+		self.charset_update()
+	def ctrl_SO(self):
+		# Shift out
+		self.charset_set(1)
+	def ctrl_SI(self):
+		# Shift in
+		self.charset_set(0)
 	def esc_DECALN(self):
 		# Screen alignment display
 		self.fill(0,0,self.h,self.w,0x00fe0045)
@@ -254,14 +277,14 @@ class Terminal:
 		self.vt100_saved_cx=self.cx
 		self.vt100_saved_cy=self.cy
 		self.vt100_saved_attr=self.attr
-		self.vt100_saved_charmap=self.vt100_charmap
+		self.vt100_saved_charset_g_sel=self.vt100_charset_g_sel
 		self.vt100_saved_mode_origin=self.vt100_mode_origin
 	def esc_RCP(self):
 		# Retore cursor position
 		self.cx=self.vt100_saved_cx
 		self.cy=self.vt100_saved_cy
 		self.attr=self.vt100_saved_attr
-		self.vt100_charmap=self.vt100_saved_charmap
+		self.vt100_charset_g_sel=self.vt100_saved_charset_g_sel
 		self.vt100_mode_origin=self.vt100_saved_mode_origin
 	def esc_IND(self):
 		self.ctrl_LF()
@@ -276,11 +299,11 @@ class Terminal:
 		else:
 			self.cursor_up()
 	def esc_SS2(self):
-		# TO-DO
-		pass
+		# Single-shift two
+		self.vt100_charset_is_single_shift=True
 	def esc_SS3(self):
-		# TO-DO
-		pass
+		# Single-shift three
+		self.vt100_charset_is_single_shift=True
 	def esc_DCS(self):
 		# Device control string
 		self.vt100_parse_reset('str',0)
@@ -420,7 +443,7 @@ class Terminal:
 	def csi_REP(self,p):
 		# Repeat
 		p=self.vt100_parse_params(p,[1])
-		n=max(2000,min(1,p[0]))
+		n=min(2000,max(1,p[0]))
 		while n:
 			self.dumb_echo(self.vt100_lastchar)
 			n-=1
@@ -489,7 +512,7 @@ class Terminal:
 				# Background
 				self.attr=(self.attr&0x7ff00000)|((m-40)<<16)
 			elif m==49:
-				# Default bg coor
+				# Default bg color
 				self.attr=(self.attr&0x7ff00000)|0x000e0000
 	def csi_DSR(self,p):
 		# Device status report
@@ -504,6 +527,18 @@ class Terminal:
 			self.vt100_out="WebShell"
 		elif p[0]=='8':
 			self.vt100_out=version
+		elif p[0]=='?6':
+			x=self.cx+1
+			y=self.cy+1
+			self.vt100_out='\x1b[?%d;%dR'%(y,x)	
+		elif p[0]=='?15':
+			self.vt100_out='\x1b[?13n'
+		elif p[0]=='?25':
+			self.vt100_out='\x1b[?20n'
+		elif p[0]=='?26':
+			self.vt100_out='\x1b[?27;1n'
+		elif p[0]=='?53':
+			self.vt100_out='\x1b[?53n'
 	def csi_DECSTBM(self,p):
 		# Set top and bottom margins
 		p=self.vt100_parse_params(p,[1,self.h])
@@ -531,9 +566,6 @@ class Terminal:
 			elif m=='?1':
 				# Cursor key mode
 				self.vt100_mode_cursorkey=state
-			elif m=='?67':
-				# Backspace/delete
-				self.vt100_mode_backspace=state
 			elif m=='?3':
 				# Column mode
 				if self.vt100_mode_column_switch:
@@ -563,12 +595,10 @@ class Terminal:
 				self.vt100_mode_column_switch=state
 			elif m=='?47':
 				# Alternate screen mode
-				if state and not self.vt100_mode_alt_screen:
-					self.screen,self.screen2=self.screen2,self.screen
-				if not state and self.vt100_mode_alt_screen:
+				if (state and not self.vt100_mode_alt_screen) or (not state and self.vt100_mode_alt_screen):
 					self.screen,self.screen2=self.screen2,self.screen
 				self.vt100_mode_alt_screen=state
-			elif m=='?47':
+			elif m=='?67':
 				# Backspace/delete
 				self.vt100_mode_backspace=state
 	def vt100_parse_params(self,p,d,to_int=True):
@@ -613,26 +643,26 @@ class Terminal:
 				return True
 			elif f=='#8':
 				self.esc_DECALN()
-			elif f=='(A':
-				self.charset_set(1,0)
-			elif f=='(B':
-				self.charset_set(1,1)
-			elif f=='(0':
-				self.charset_set(1,2)
-			elif f=='(1':
-				self.charset_set(1,3)
-			elif f=='(2':
-				self.charset_set(1,4)
 			elif f==')A':
-				self.charset_set(0,0)
+				self.charset_select(1,0)
 			elif f==')B':
-				self.charset_set(0,1)
+				self.charset_select(1,1)
 			elif f==')0':
-				self.charset_set(0,2)
+				self.charset_select(1,2)
 			elif f==')1':
-				self.charset_set(0,3)
+				self.charset_select(1,3)
 			elif f==')2':
-				self.charset_set(0,4)
+				self.charset_select(1,4)
+			elif f=='(A':
+				self.charset_select(0,0)
+			elif f=='(B':
+				self.charset_select(0,1)
+			elif f=='(0':
+				self.charset_select(0,2)
+			elif f=='(1':
+				self.charset_select(0,3)
+			elif f=='(2':
+				self.charset_select(0,4)
 			elif f=='7':
 				self.esc_SCP()
 			elif f=='8':
@@ -671,6 +701,8 @@ class Terminal:
 				return True
 			elif f=='c':
 				self.reset_hard()
+#			else:
+#				print 'Unknown'
 		else:
 			# CSI mode
 			f=self.vt100_parse_func
@@ -752,40 +784,45 @@ class Terminal:
 #				print 'Unknown'
 		return self.vt100_parse_reset()
 	def vt100_write(self,char):
-		if char>=0x80 and char<=0x9f:
+		if char<32:
+			if char==27:
+				self.vt100_parse_reset('esc')
+				return True
+			elif char==14:
+				self.ctrl_SO()
+			elif char==15:
+				self.ctrl_SI()
+		elif (char&0xe0)==0x80:
 			self.vt100_parse_reset('esc')
 			self.vt100_parse_func=chr(char-0x40)
 			self.vt100_process()
 			return True
-		if char==27:
-			self.vt100_parse_reset('esc')
-			return True
+
 		if self.vt100_parse_state=='str':
-			if char<32:
-				self.vt100_parse_reset('')
-				return False
-			return True
-		if self.vt100_parse_state:
+			if char>=32:
+				return True
+			self.vt100_parse_reset()
+		elif self.vt100_parse_state:
 			if char<32:
 				if char==24 or char==26:
-					self.vt100_parse_reset('')
+					self.vt100_parse_reset()
 					return True
 				return False
 			self.vt100_parse_len+=1
 			if self.vt100_parse_len>32:
 				self.vt100_parse_reset()
-				return True
-			char_msb=char&0xf0
-			if char_msb==0x20:
-				# Intermediate bytes (added to function)
-				self.vt100_parse_func+=unichr(char)
-			elif char_msb==0x30 and self.vt100_parse_state=='csi':
-				# Parameter byte
-				self.vt100_parse_param+=unichr(char)
 			else:
-				# Function byte
-				self.vt100_parse_func+=unichr(char)
-				self.vt100_process()
+				char_msb=char&0xf0
+				if char_msb==0x20:
+					# Intermediate bytes (added to function)
+					self.vt100_parse_func+=unichr(char)
+				elif char_msb==0x30 and self.vt100_parse_state=='csi':
+					# Parameter byte
+					self.vt100_parse_param+=unichr(char)
+				else:
+					# Function byte
+					self.vt100_parse_func+=unichr(char)
+					self.vt100_process()
 			return True
 		return False
 
@@ -802,18 +839,19 @@ class Terminal:
 		self.vt100_out=""
 		return d
 	def write(self,d):
-#		f=open('/tmp/out.txt','a')
-#		f.write(d)
-#		f.close()
+		f=open('/tmp/out.txt','a')
+		f.write(d)
+		f.close()
 		d=self.utf8_decode(d)
 		for c in d:
 			char=ord(c)
-			if not self.vt100_write(char):
-				if char<32:
-					self.dumb_write(char)
-				elif char<=0xffff:
-					self.vt100_lastchar=char
-					self.dumb_echo(char)
+			if self.vt100_write(char):
+				continue
+			if self.dumb_write(char):
+				continue
+			if char<=0xffff:
+				self.vt100_lastchar=char
+				self.dumb_echo(char)
 		return True
 	def pipe(self,d):
 		o=''
