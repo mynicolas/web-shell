@@ -8,7 +8,6 @@ webshell.TerminalClass=function(id,width,height) {
 	var query1=query0+"&k=";
 	var buf="";
 	var timeout;
-	var error_timeout;
 	var keybuf=[];
 	var sending=0;
 	var rmax=1;
@@ -46,15 +45,6 @@ webshell.TerminalClass=function(id,width,height) {
 		else
 			return "";
 	}
-	function do_paste(event) {
-		var p=undefined;
-		if (window.clipboardData)
-			p=window.clipboardData.getData("Text");
-		else if(window.netscape)
-			p=mozilla_clipboard();
-		if (p)
-			queue(encodeURIComponent(p));
-	}
 	function update() {
 		if(sending==0) {
 			sending=1;
@@ -73,7 +63,6 @@ webshell.TerminalClass=function(id,width,height) {
 			r.onreadystatechange = function () {
 				if (r.readyState==4) {
 					if(r.status==200) {
-						window.clearTimeout(error_timeout);
 						de=r.responseXML.documentElement;
 						if(de.tagName=="pre") {
 							Sarissa.updateContentFromNode(de, dterm);
@@ -89,7 +78,6 @@ webshell.TerminalClass=function(id,width,height) {
 						debug("Connection error.");
 				}
 			}
-//			error_timeout=window.setTimeout(error,5000);
 			if (opt_get)
 				r.send(null);
 			else
@@ -103,28 +91,25 @@ webshell.TerminalClass=function(id,width,height) {
 			timeout=window.setTimeout(update,1);
 		}
 	}
-	this.sendkey = function(kc) {
-		private_sendkey(kc);
-	}
 	function private_sendkey(kc) {
 		var k="";
 
 		// Build character
 		switch (kc) {
+		case 63273: k="OH"; break;		// Home
+		case 63275: k="OF"; break;		// End
 		case 63276: k="[5~"; break;		// PgUp
 		case 63277: k="[6~"; break;		// PgDn
-		case 63275: k="[F"; break;		// End
-		case 63273: k="[H"; break;		// Home
-		case 63234: k="[D"; break;		// Left
-		case 63232: k="[A"; break;		// Up
-		case 63235: k="[C"; break;		// Right
-		case 63233: k="[B"; break;		// Down
+		case 63232: k="OA"; break;		// Up
+		case 63233: k="OB"; break;		// Down
+		case 63234: k="OD"; break;		// Left
+		case 63235: k="OC"; break;		// Right
 		case 63302: k="[2~"; break;		// Ins
 		case 63272: k="[3~"; break;		// Del
-		case 63236: k="[[A"; break;		// F1
-		case 63237: k="[[B"; break;		// F2
-		case 63238: k="[[C"; break;		// F3
-		case 63239: k="[[D"; break;		// F4
+		case 63236: k="OP"; break;		// F1
+		case 63237: k="OQ"; break;		// F2
+		case 63238: k="OR"; break;		// F3
+		case 63239: k="OS"; break;		// F4
 		case 63240: k="[15~"; break;	// F5
 		case 63241: k="[17~"; break;	// F6
 		case 63242: k="[18~"; break;	// F7
@@ -146,6 +131,9 @@ webshell.TerminalClass=function(id,width,height) {
 		if(k.length)
 			queue(encodeURIComponent(k));
 	};
+	this.sendkey = function(kc) {
+		private_sendkey(kc);
+	}
 	this.keypress = function(ev) {
 		if (!ev) var ev=window.event;
 		var kc;
@@ -220,6 +208,15 @@ webshell.TerminalClass=function(id,width,height) {
 				return keypress(ev);
 			}
 		}
+	}
+	this.paste = function(ev) {
+		var p=undefined;
+		if (window.clipboardData)
+			p=window.clipboardData.getData("Text");
+		else if(window.netscape)
+			p=mozilla_clipboard();
+		if (p)
+			queue(encodeURIComponent(p));
 	}
 	function init() {
 		div.appendChild(dterm);
