@@ -44,7 +44,11 @@ pre.term span.bc { background-color: #555555; }		/* Cursor */
 pre.term span.be { background-color: transparent; }	/* Default bg */
 pre.term span.bf { background-color: #ffffff; }		/* Negative bg */
 
-.overlaybg {
+.ol {
+display:none;
+}
+
+.olBg {
 position:absolute;
 z-index:100;
 width:480px;
@@ -52,7 +56,7 @@ height:268px;
 cursor:pointer;
 }
 
-.overlaygrayed {
+.olGray {
 position:absolute;
 z-index:50;
 width:480px;
@@ -65,26 +69,11 @@ table {
 border-collapse:collapse;
 }
 
-.overlaycontrols {
+.olCtrl {
 position:absolute;
 z-index:200;
 margin-left:42px;
 width:396px;
-}
-#overlay1 {
-display:block;
-}
-#overlay2 {
-display:none;
-}
-#overlay3 {
-display:none;
-}
-#overlay4 {
-display:none;
-}
-#overlay5 {
-display:none;
 }
 
 .ctrltextborder {
@@ -125,7 +114,7 @@ padding:18px 4px 0 0;
 margin-top:64px;
 }
 
-.ctrlerror {
+.olMsg {
 padding:110px 0 0 0;
 text-align:center;
 font:24px sans-serif;

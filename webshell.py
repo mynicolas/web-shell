@@ -3,7 +3,7 @@
 """ WebShell Server """
 """ Released under the GPL 2.0 by Marc S. Ressl """
 
-version="0.8.0"
+version="0.8.1"
 
 import array,time,glob,optparse,random,re
 import os,sys,pty,signal,select,commands,threading,fcntl,termios,struct,pwd
@@ -21,10 +21,132 @@ class Terminal:
 		self.h=h
 		self.reset_hard()
 		
-		self.vt100_charset_graph =[0x25ca,0x2026,0x2022,0x3f, 0xb6,0x3f,0xb0,0xb1]
-		self.vt100_charset_graph+=[0x3f,0x3f,0x2b,0x2b, 0x2b,0x2b,0x2b,0xaf]
-		self.vt100_charset_graph+=[0x2014,0x2014,0x2014,0x5f, 0x2b,0x2b,0x2b]
-		self.vt100_charset_graph+=[0x2b, 0x7c,0x2264,0x2265,0xb6, 0x2260,0xa3,0xb7,0x7f]
+		self.vt100_charset_graph=[
+			0x25ca,0x2026,0x2022,0x3f,
+			0xb6,0x3f,0xb0,0xb1,
+			0x3f,0x3f,0x2b,0x2b,
+			0x2b,0x2b,0x2b,0xaf,
+			0x2014,0x2014,0x2014,0x5f,
+			0x2b,0x2b,0x2b,0x2b,
+			0x7c,0x2264,0x2265,0xb6,
+			0x2260,0xa3,0xb7,0x7f
+		]
+		self.vt100_esc={
+#			'[':	self.vt100_parse_reset('csi',1),
+			'#8':	self.esc_DECALN,
+#			'(A':	self.charset_select(0,0)
+#			'(B':	self.charset_select(0,1)
+#			'(0':	self.charset_select(0,2)
+#			'(1':	self.charset_select(0,3)
+#			'(2':	self.charset_select(0,4)
+#			')A':	self.charset_select(1,0)
+#			')B':	self.charset_select(1,1)
+#			')0':	self.charset_select(1,2)
+#			')1':	self.charset_select(1,3)
+#			')2':	self.charset_select(1,4)
+			'7':	self.esc_DECSC,
+			'8':	self.esc_DECRC,
+			'D':	self.esc_IND,
+			'E':	self.esc_NEL,
+#			'H':	self.csi_CTC('0')
+			'M':	self.esc_RI,
+			'N':	self.esc_SS2,
+			'O':	self.esc_SS3,
+			'P':	self.esc_DCS,
+			'X':	self.esc_SOS,
+#			'Z':	self.csi_DA('0')
+			'\\':	self.esc_ST,
+			']':	self.esc_OSC,
+			'^':	self.esc_PM,
+			'_':	self.esc_APC,
+			'c':	self.reset_hard,
+		}
+		self.vt100_csi={
+			'@':	self.csi_ICH,
+			'A':	self.csi_CUU,
+			'B':	self.csi_CUD,
+			'C':	self.csi_CUF,
+			'D':	self.csi_CUB,
+			'E':	self.csi_CNL,
+			'F':	self.csi_CPL,
+			'G':	self.csi_CHA,
+			'H':	self.csi_CUP,
+			'I':	self.csi_CHT,
+			'J':	self.csi_ED,
+			'K':	self.csi_EL,
+			'L':	self.csi_IL,
+			'M':	self.csi_DL,
+			'P':	self.csi_DCH,
+			'S':	self.csi_SU,
+			'T':	self.csi_SD,
+			'W':	self.csi_CTC,
+			'X':	self.csi_ECH,
+			'Z':	self.csi_CBT,
+			'`':	self.csi_HPA,
+			'a':	self.csi_HPR,
+			'b':	self.csi_REP,
+			'c':	self.csi_DA,
+			'd':	self.csi_VPA,
+			'e':	self.csi_VPR,
+			'f':	self.csi_HVP,
+			'g':	self.csi_TBC,
+			'h':	self.csi_SM,
+			'l':	self.csi_RM,
+			'm':	self.csi_SGR,
+			'n':	self.csi_DSR,
+			'r':	self.csi_DECSTBM,
+			's':	self.csi_SCP,
+			'u':	self.csi_RCP,
+			'x':	self.csi_DECREQTPARM,
+		}
+		self.vt100_keyfilter_ansikeys={
+			'A':'\x1b[A',
+			'B':'\x1b[B',
+			'C':'\x1b[C',
+			'D':'\x1b[D',
+			'F':'\x1b[F',
+			'H':'\x1b[H',
+			'1':'\x1b[5~',
+			'2':'\x1b[6~',
+			'3':'\x1b[2~',
+			'4':'\x1b[3~',
+			'a':'\x1bOP',
+			'b':'\x1bOQ',
+			'c':'\x1bOR',
+			'd':'\x1bOS',
+			'e':'\x1b[15~',
+			'f':'\x1b[17~',
+			'g':'\x1b[18~',
+			'h':'\x1b[19~',
+			'i':'\x1b[20~',
+			'j':'\x1b[21~',
+			'k':'\x1b[23~',
+			'l':'\x1b[24~'
+		}
+		self.vt100_keyfilter_appkeys={
+			'A':'\x1bOA',
+			'B':'\x1bOB',
+			'C':'\x1bOC',
+			'D':'\x1bOD',
+			'F':'\x1bOF',
+			'H':'\x1bOH',
+			'1':'\x1b[5~',
+			'2':'\x1b[6~',
+			'3':'\x1b[2~',
+			'4':'\x1b[3~',
+			'a':'\x1bOP',
+			'b':'\x1bOQ',
+			'c':'\x1bOR',
+			'd':'\x1bOS',
+			'e':'\x1b[15~',
+			'f':'\x1b[17~',
+			'g':'\x1b[18~',
+			'h':'\x1b[19~',
+			'i':'\x1b[20~',
+			'j':'\x1b[21~',
+			'k':'\x1b[23~',
+			'l':'\x1b[24~'
+		}
 	# Reset functions
 	def reset_hard(self):
 		# Attribute mask: 0x0XFB0000
@@ -38,13 +160,13 @@ class Terminal:
 		self.utf8_units_count=0
 		self.utf8_units_received=0
 		self.utf8_char=0
-		# Character map
+		# Character sets
 		self.vt100_charset_is_single_shift=False
 		self.vt100_charset_is_graphical=False
 		self.vt100_charset_g_sel=0
 		self.vt100_charset_g=[0,0]
 		# Key filter
-		self.vt100_keyfilter_cursorstate=0
+		self.vt100_keyfilter_escape=False
 		# Last char
 		self.vt100_lastchar=32
 		# Modes
@@ -58,12 +180,6 @@ class Terminal:
 		self.vt100_mode_cursor=True
 		self.vt100_mode_alt_screen=False
 		self.vt100_mode_backspace=False
-		# Saved cursor data
-		self.vt100_saved_cx=0
-		self.vt100_saved_cy=0
-		self.vt100_saved_attr=self.attr
-		self.vt100_saved_charset_g_sel=self.vt100_charset_g_sel
-		self.vt100_saved_mode_origin=self.vt100_mode_origin
 		# Control sequences
 		self.vt100_parse_len=0
 		self.vt100_parse_state=""
@@ -74,7 +190,9 @@ class Terminal:
 		# Caches
 		self.dump_cache=""
 		
+		# Soft reset
 		self.reset()
+		self.esc_DECSC()
 	def reset(self):
 		# Screen
 		self.screen=array.array('i',[self.attr|0x20]*self.w*self.h)
@@ -176,6 +294,7 @@ class Terminal:
 		for x in range(min(self.cx,self.w)):
 			char=self.peek(self.cy,x,self.cy+1,x+1)[0]&0xffff
 			wx+=self.utf8_charwidth(char)
+			cx+=1
 		return wx,cx
 	def cursor_up(self,n=1):
 		self.cy=max(self.scroll_area_y0,self.cy-n)
@@ -272,19 +391,24 @@ class Terminal:
 	def esc_DECALN(self):
 		# Screen alignment display
 		self.fill(0,0,self.h,self.w,0x00fe0045)
-	def esc_SCP(self):
-		# Store cursor position
+	def esc_DECSC(self):
+		# Store cursor
 		self.vt100_saved_cx=self.cx
 		self.vt100_saved_cy=self.cy
 		self.vt100_saved_attr=self.attr
 		self.vt100_saved_charset_g_sel=self.vt100_charset_g_sel
+		self.vt100_saved_charset_g=self.vt100_charset_g[:]
+		self.vt100_saved_mode_autowrap=self.vt100_mode_autowrap
 		self.vt100_saved_mode_origin=self.vt100_mode_origin
-	def esc_RCP(self):
-		# Retore cursor position
+	def esc_DECRC(self):
+		# Retore cursor
 		self.cx=self.vt100_saved_cx
 		self.cy=self.vt100_saved_cy
 		self.attr=self.vt100_saved_attr
 		self.vt100_charset_g_sel=self.vt100_saved_charset_g_sel
+		self.vt100_charset_g=self.vt100_saved_charset_g[:]
+		self.charset_update()
+		self.vt100_mode_autowrap=self.vt100_saved_mode_autowrap
 		self.vt100_mode_origin=self.vt100_saved_mode_origin
 	def esc_IND(self):
 		self.ctrl_LF()
@@ -547,6 +671,12 @@ class Terminal:
 			self.cursor_set(self.scroll_area_y0,0)
 		else:
 			self.cursor_set(0,0)
+	def csi_SCP(self,p):
+		# Save cursor position
+		self.esc_DECSC()
+	def csi_RCP(self,p):
+		# Restore cursor position
+		self.esc_DECSC()
 	def csi_DECREQTPARM(self,p):
 		# Request terminal parameters
 		p=self.vt100_parse_params(p,[],False)
@@ -643,16 +773,6 @@ class Terminal:
 				return True
 			elif f=='#8':
 				self.esc_DECALN()
-			elif f==')A':
-				self.charset_select(1,0)
-			elif f==')B':
-				self.charset_select(1,1)
-			elif f==')0':
-				self.charset_select(1,2)
-			elif f==')1':
-				self.charset_select(1,3)
-			elif f==')2':
-				self.charset_select(1,4)
 			elif f=='(A':
 				self.charset_select(0,0)
 			elif f=='(B':
@@ -663,10 +783,20 @@ class Terminal:
 				self.charset_select(0,3)
 			elif f=='(2':
 				self.charset_select(0,4)
+			elif f==')A':
+				self.charset_select(1,0)
+			elif f==')B':
+				self.charset_select(1,1)
+			elif f==')0':
+				self.charset_select(1,2)
+			elif f==')1':
+				self.charset_select(1,3)
+			elif f==')2':
+				self.charset_select(1,4)
 			elif f=='7':
-				self.esc_SCP()
+				self.esc_DECSC()
 			elif f=='8':
-				self.esc_RCP()
+				self.esc_DECRC()
 			elif f=='D':
 				self.esc_IND()
 			elif f=='E':
@@ -775,9 +905,9 @@ class Terminal:
 			elif f=='r':
 				self.csi_DECSTBM(p)
 			elif f=='s':
-				self.esc_SCP()
+				self.csi_SCP(p)
 			elif f=='u':
-				self.esc_RCP()
+				self.csi_RCP(p)
 			elif f=='x':
 				self.csi_DECREQTPARM(p)
 #			else:
@@ -856,27 +986,27 @@ class Terminal:
 	def pipe(self,d):
 		o=''
 		for c in d:
-			if not self.vt100_mode_cursorkey:
-				if self.vt100_keyfilter_cursorstate==0:
-					if ord(c)==27:
-						self.vt100_keyfilter_cursorstate=1
-				elif self.vt100_keyfilter_cursorstate==1:
-					if c=='O':
-						self.vt100_keyfilter_cursorstate=2
+			char=ord(c)
+			if self.vt100_keyfilter_escape:
+				self.vt100_keyfilter_escape=False
+				try:
+					if self.vt100_mode_cursorkey:
+						o+=self.vt100_keyfilter_appkeys[c]
 					else:
-						self.vt100_keyfilter_cursorstate=0
-					continue
-				elif self.vt100_keyfilter_cursorstate==2:
-					if c=='A' or c=='B' or c=='C' or c=='D' or c=='H' or c=='F':
-						o+='['
-					else:
-						o+='O'
-					self.vt100_keyfilter_cursorstate=0
-			if self.vt100_mode_backspace and ord(c)==127:
-				c=chr(8)
-			o+=c
-			if self.vt100_mode_lfnewline and ord(c)==13:
-				o+=chr(10)
+						o+=self.vt100_keyfilter_ansikeys[c]
+				except KeyError:
+					pass
+			elif c=='~':
+				self.vt100_keyfilter_escape=True
+			elif char==8:
+				if self.vt100_mode_backspace:
+					o+=chr(8)
+				else:
+					o+=chr(127)
+			else:
+				o+=c
+				if self.vt100_mode_lfnewline and char==13:
+					o+=chr(10)
 		return o
 	def dump(self):
 		pre=u""
@@ -1214,10 +1344,10 @@ def main():
 				file(o.pidfile,'w+').write(str(pid)+'\n')
 			except:
 				pass
-			print 'WebShell at http://localhost:%s/ pid: %d' % (o.port,pid)
+			print 'WebShell '+version+' at http://localhost:%s/ pid: %d' % (o.port,pid)
 			sys.exit(0)
 	else:
-		print 'WebShell at http://localhost:%s/' % o.port
+		print 'WebShell '+version+' at http://localhost:%s/' % o.port
 	webshell=WebShell(o.cmd,o.index_file)
 	try:
 		qweb.QWebWSGIServer(webshell,ip='localhost',port=int(o.port),threaded=0,log=o.log).serve_forever()
