@@ -12,7 +12,6 @@ webshell.TerminalClass=function(id,width,height) {
 	var rmax=1;
 
 	var div=document.getElementById(id);
-	var dterm=document.createElement('div');
 
 	var opt_get=true;
 
@@ -34,9 +33,9 @@ webshell.TerminalClass=function(id,width,height) {
 			r.onreadystatechange = function () {
 				if (r.readyState==4) {
 					if(r.status==200) {
-						de=r.responseXML.documentElement;
-						if(de.tagName=="pre") {
-							Sarissa.updateContentFromNode(de, dterm);
+						html=r.responseText;
+						if(html!="<idem/>") {
+							div.innerHTML=html;
 							rmax=100;
 						} else {
 							rmax*=2;
@@ -97,15 +96,14 @@ webshell.TerminalClass=function(id,width,height) {
 		private_sendkey(kc);
 	}
 	this.keypress = function(ev) {
+		// Translate to standard keycodes
 		if (!ev) var ev=window.event;
 		var kc;
 
-		// Translate other browsers to standard keycodes
 		if (ev.keyCode)
 			kc=ev.keyCode;
 		if (ev.which)
 			kc=ev.which;
-
 		if (ev.ctrlKey) {
 			if (kc>=0 && kc<=32) kc=kc;
 			else if (kc>=65 && kc<=90) kc-=64;
@@ -149,7 +147,6 @@ webshell.TerminalClass=function(id,width,height) {
 			default: return true;
 			}
 		}
-
 		private_sendkey(kc);
 		
 		ev.cancelBubble=true;
@@ -170,7 +167,6 @@ webshell.TerminalClass=function(id,width,height) {
 		}
 	}
 	function init() {
-		div.appendChild(dterm);
 		timeout=window.setTimeout(update,100);
 	}
 	init();

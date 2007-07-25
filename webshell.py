@@ -32,29 +32,29 @@ class Terminal:
 			0x2260,0xa3,0xb7,0x7f
 		]
 		self.vt100_esc={
-#			'[':	self.vt100_parse_reset('csi',1),
+			'[':	self.esc_CSI,
 			'#8':	self.esc_DECALN,
-#			'(A':	self.charset_select(0,0)
-#			'(B':	self.charset_select(0,1)
-#			'(0':	self.charset_select(0,2)
-#			'(1':	self.charset_select(0,3)
-#			'(2':	self.charset_select(0,4)
-#			')A':	self.charset_select(1,0)
-#			')B':	self.charset_select(1,1)
-#			')0':	self.charset_select(1,2)
-#			')1':	self.charset_select(1,3)
-#			')2':	self.charset_select(1,4)
+			'(A':	self.esc_G0_0,
+			'(B':	self.esc_G0_1,
+			'(0':	self.esc_G0_2,
+			'(1':	self.esc_G0_3,
+			'(2':	self.esc_G0_4,
+			')A':	self.esc_G1_0,
+			')B':	self.esc_G1_1,
+			')0':	self.esc_G1_2,
+			')1':	self.esc_G1_3,
+			')2':	self.esc_G1_4,
 			'7':	self.esc_DECSC,
 			'8':	self.esc_DECRC,
 			'D':	self.esc_IND,
 			'E':	self.esc_NEL,
-#			'H':	self.csi_CTC('0')
+			'H':	self.esc_HTS,
 			'M':	self.esc_RI,
 			'N':	self.esc_SS2,
 			'O':	self.esc_SS3,
 			'P':	self.esc_DCS,
 			'X':	self.esc_SOS,
-#			'Z':	self.csi_DA('0')
+			'Z':	self.esc_DECID,
 			'\\':	self.esc_ST,
 			']':	self.esc_OSC,
 			'^':	self.esc_PM,
@@ -290,12 +290,12 @@ class Terminal:
 	# Cursor functions
 	def cursor_line_width(self,next_char):
 		wx=self.utf8_charwidth(next_char)
-		cx=0
+		lx=0
 		for x in range(min(self.cx,self.w)):
 			char=self.peek(self.cy,x,self.cy+1,x+1)[0]&0xffff
 			wx+=self.utf8_charwidth(char)
-			cx+=1
-		return wx,cx
+			lx+=1
+		return wx,lx
 	def cursor_up(self,n=1):
 		self.cy=max(self.scroll_area_y0,self.cy-n)
 	def cursor_down(self,n=1):
@@ -361,7 +361,7 @@ class Terminal:
 				self.ctrl_CR()
 				self.ctrl_LF()
 			else:
-				self.cx=cx
+				self.cx=cx-1
 		if self.vt100_mode_insert:
 			self.scroll_line_right(self.cy,self.cx)
 		if self.vt100_charset_is_single_shift:
@@ -388,9 +388,32 @@ class Terminal:
 	def ctrl_SI(self):
 		# Shift in
 		self.charset_set(0)
+	def esc_CSI(self):
+		# CSI start sequence
+		self.vt100_parse_reset('csi')
 	def esc_DECALN(self):
 		# Screen alignment display
 		self.fill(0,0,self.h,self.w,0x00fe0045)
+	def esc_G0_0(self):
+		self.charset_select(0,0)
+	def esc_G0_1(self):
+		self.charset_select(0,1)
+	def esc_G0_2(self):
+		self.charset_select(0,2)
+	def esc_G0_3(self):
+		self.charset_select(0,3)
+	def esc_G0_4(self):
+		self.charset_select(0,4)
+	def esc_G1_0(self):
+		self.charset_select(1,0)
+	def esc_G1_1(self):
+		self.charset_select(1,1)
+	def esc_G1_2(self):
+		self.charset_select(1,2)
+	def esc_G1_3(self):
+		self.charset_select(1,3)
+	def esc_G1_4(self):
+		self.charset_select(1,4)
 	def esc_DECSC(self):
 		# Store cursor
 		self.vt100_saved_cx=self.cx
@@ -416,6 +439,9 @@ class Terminal:
 		# Next line
 		self.ctrl_CR()
 		self.ctrl_LF()
+	def esc_HTS(self):
+		# Character tabulation set
+		self.csi_CTC('0')
 	def esc_RI(self):
 		# Reverse line feed
 		if self.cy==self.scroll_area_y0:
@@ -430,22 +456,25 @@ class Terminal:
 		self.vt100_charset_is_single_shift=True
 	def esc_DCS(self):
 		# Device control string
-		self.vt100_parse_reset('str',0)
+		self.vt100_parse_reset('str')
 	def esc_SOS(self):
 		# Start of string
-		self.vt100_parse_reset('str',0)
+		self.vt100_parse_reset('str')
+	def esc_DECID(self):
+		# Identify terminal
+		self.csi_DA('0')
 	def esc_ST(self):
 		# String terminator
 		pass
 	def esc_OSC(self):
 		# Operating system command
-		self.vt100_parse_reset('str',0)
+		self.vt100_parse_reset('str')
 	def esc_PM(self):
 		# Privacy message
-		self.vt100_parse_reset('str',0)
+		self.vt100_parse_reset('str')
 	def esc_APC(self):
 		# Application program command
-		self.vt100_parse_reset('str',0)
+		self.vt100_parse_reset('str')
 	def csi_ICH(self,p):
 		# Insert character
 		p=self.vt100_parse_params(p,[1])
@@ -733,6 +762,7 @@ class Terminal:
 				self.vt100_mode_backspace=state
 	def vt100_parse_params(self,p,d,to_int=True):
 		# Process parameters (params p with defaults d)
+		# Add prefix to all parameters
 		prefix=''
 		if len(p)>0:
 			if p[0]>='<' and p[0]<='?':
@@ -741,6 +771,7 @@ class Terminal:
 			p=p.split(';')
 		else:
 			p=''
+		# Process parameters
 		n=max(len(p),len(d))
 		o=[]
 		for i in range(n):
@@ -757,9 +788,9 @@ class Terminal:
 				value=d[i]
 			o.append(value)
 		return o
-	def vt100_parse_reset(self,vt100_parse_state="",vt100_parse_len=0):
-		self.vt100_parse_len=vt100_parse_len
+	def vt100_parse_reset(self,vt100_parse_state=""):
 		self.vt100_parse_state=vt100_parse_state
+		self.vt100_parse_len=0
 		self.vt100_parse_func=""
 		self.vt100_parse_param=""
 	def vt100_process(self):
@@ -768,151 +799,25 @@ class Terminal:
 			f=self.vt100_parse_func
 #			if f!='[':
 #				print 'ESC code: ',f
-			if f=='[':
-				self.vt100_parse_reset('csi',1)
-				return True
-			elif f=='#8':
-				self.esc_DECALN()
-			elif f=='(A':
-				self.charset_select(0,0)
-			elif f=='(B':
-				self.charset_select(0,1)
-			elif f=='(0':
-				self.charset_select(0,2)
-			elif f=='(1':
-				self.charset_select(0,3)
-			elif f=='(2':
-				self.charset_select(0,4)
-			elif f==')A':
-				self.charset_select(1,0)
-			elif f==')B':
-				self.charset_select(1,1)
-			elif f==')0':
-				self.charset_select(1,2)
-			elif f==')1':
-				self.charset_select(1,3)
-			elif f==')2':
-				self.charset_select(1,4)
-			elif f=='7':
-				self.esc_DECSC()
-			elif f=='8':
-				self.esc_DECRC()
-			elif f=='D':
-				self.esc_IND()
-			elif f=='E':
-				self.esc_NEL()
-			elif f=='H':
-				self.csi_CTC('0')
-			elif f=='M':
-				self.esc_RI()
-			elif f=='N':
-				self.esc_SS2()
-			elif f=='O':
-				self.esc_SS3()
-			elif f=='P':
-				self.esc_DCS()
-				return True
-			elif f=='X':
-				self.esc_SOS()
-				return True
-			elif f=='Z':
-				self.csi_DA('0')
-			elif f=='\\':
-				self.esc_ST()
-				return True
-			elif f==']':
-				self.esc_OSC()
-				return True
-			elif f=='^':
-				self.esc_PM()
-				return True
-			elif f=='_':
-				self.esc_APC()
-				return True
-			elif f=='c':
-				self.reset_hard()
-#			else:
+			try:
+				self.vt100_esc[f]()
+			except KeyError:
 #				print 'Unknown'
+				pass
+			if self.vt100_parse_state=='esc':
+				self.vt100_parse_reset()
 		else:
 			# CSI mode
 			f=self.vt100_parse_func
 			p=self.vt100_parse_param
 #			print 'CSI code: ',p,f
-			if f=='@':
-				self.csi_ICH(p)
-			elif f=='A':
-				self.csi_CUU(p)
-			elif f=='B':
-				self.csi_CUD(p)
-			elif f=='C':
-				self.csi_CUF(p)
-			elif f=='D':
-				self.csi_CUB(p)
-			elif f=='E':
-				self.csi_CNL(p)
-			elif f=='F':
-				self.csi_CPL(p)
-			elif f=='G':
-				self.csi_CHA(p)
-			elif f=='H':
-				self.csi_CUP(p)
-			elif f=='I':
-				self.csi_CHT(p)
-			elif f=='J':
-				self.csi_ED(p)
-			elif f=='K':
-				self.csi_EL(p)
-			elif f=='L':
-				self.csi_IL(p)
-			elif f=='M':
-				self.csi_DL(p)
-			elif f=='P':
-				self.csi_DCH(p)
-			elif f=='S':
-				self.csi_SU(p)
-			elif f=='T':
-				self.csi_SD(p)
-			elif f=='W':
-				self.csi_CTC(p)
-			elif f=='X':
-				self.csi_ECH(p)
-			elif f=='Z':
-				self.csi_CBT(p)
-			elif f=='`':
-				self.csi_HPA(p)
-			elif f=='a':
-				self.csi_HPR(p)
-			elif f=='b':
-				self.csi_REP(p)
-			elif f=='c':
-				self.csi_DA(p)
-			elif f=='d':
-				self.csi_VPA(p)
-			elif f=='e':
-				self.csi_VPR(p)
-			elif f=='f':
-				self.csi_HVP(p)
-			elif f=='g':
-				self.csi_TBC(p)
-			elif f=='h':
-				self.csi_SM(p)
-			elif f=='l':
-				self.csi_RM(p)
-			elif f=='m':
-				self.csi_SGR(p)
-			elif f=='n':
-				self.csi_DSR(p)
-			elif f=='r':
-				self.csi_DECSTBM(p)
-			elif f=='s':
-				self.csi_SCP(p)
-			elif f=='u':
-				self.csi_RCP(p)
-			elif f=='x':
-				self.csi_DECREQTPARM(p)
-#			else:
+			try:
+				self.vt100_csi[f](p)
+			except KeyError:
 #				print 'Unknown'
-		return self.vt100_parse_reset()
+				pass
+			if self.vt100_parse_state=='csi':
+				self.vt100_parse_reset()
 	def vt100_write(self,char):
 		if char<32:
 			if char==27:
@@ -922,38 +827,39 @@ class Terminal:
 				self.ctrl_SO()
 			elif char==15:
 				self.ctrl_SI()
-		elif (char&0xe0)==0x80:
+		elif (char&0xffe0)==0x0080:
 			self.vt100_parse_reset('esc')
 			self.vt100_parse_func=chr(char-0x40)
 			self.vt100_process()
 			return True
 
-		if self.vt100_parse_state=='str':
-			if char>=32:
-				return True
-			self.vt100_parse_reset()
-		elif self.vt100_parse_state:
-			if char<32:
-				if char==24 or char==26:
-					self.vt100_parse_reset()
+		if self.vt100_parse_state:
+			if self.vt100_parse_state=='str':
+				if char>=32:
 					return True
-				return False
-			self.vt100_parse_len+=1
-			if self.vt100_parse_len>32:
 				self.vt100_parse_reset()
 			else:
-				char_msb=char&0xf0
-				if char_msb==0x20:
-					# Intermediate bytes (added to function)
-					self.vt100_parse_func+=unichr(char)
-				elif char_msb==0x30 and self.vt100_parse_state=='csi':
-					# Parameter byte
-					self.vt100_parse_param+=unichr(char)
+				if char<32:
+					if char==24 or char==26:
+						self.vt100_parse_reset()
+						return True
 				else:
-					# Function byte
-					self.vt100_parse_func+=unichr(char)
-					self.vt100_process()
-			return True
+					self.vt100_parse_len+=1
+					if self.vt100_parse_len>32:
+						self.vt100_parse_reset()
+					else:
+						char_msb=char&0xf0
+						if char_msb==0x20:
+							# Intermediate bytes (added to function)
+							self.vt100_parse_func+=unichr(char)
+						elif char_msb==0x30 and self.vt100_parse_state=='csi':
+							# Parameter byte
+							self.vt100_parse_param+=unichr(char)
+						else:
+							# Function byte
+							self.vt100_parse_func+=unichr(char)
+							self.vt100_process()
+						return True
 		return False
 
 	# External interface
@@ -1009,7 +915,7 @@ class Terminal:
 					o+=chr(10)
 		return o
 	def dump(self):
-		pre=u""
+		dump=u""
 		attr_=-1
 		cx,cy=min(self.cx,self.w-1),self.cy
 		for y in range(0,self.h):
@@ -1024,7 +930,7 @@ class Terminal:
 				# Attributes
 				if attr!=attr_:
 					if attr_!=-1:
-						pre+=u'</span>'
+						dump+=u'</span>'
 					bg=attr&0x000f
 					fg=(attr&0x00f0)>>4
 					# Inverse
@@ -1040,27 +946,26 @@ class Terminal:
 						ul=' ul'
 					else:
 						ul=''
-					pre+=u'<span class="f%x b%x%s">'%(fg,bg,ul)
+					dump+=u'<span class="f%x b%x%s">'%(fg,bg,ul)
 					attr_=attr
 				# Escape HTML characters
 				if char==38:
-					pre+='&amp;'
+					dump+='&amp;'
 				elif char==60:
-					pre+='&lt;'
+					dump+='&lt;'
 				elif char==62:
-					pre+='&gt;'
+					dump+='&gt;'
 				else:
 					wx+=self.utf8_charwidth(char)
 					if wx<=self.w:
-						pre+=unichr(char)
-			pre+="\n"
+						dump+=unichr(char)
+			dump+="\n"
 		# Encode in UTF-8
-		pre=pre.encode('utf-8')
-		pre+='</span>'
+		dump=dump.encode('utf-8')
+		dump+='</span>'
 		# Cache dump
-		dump='<?xml version="1.0" encoding="UTF-8"?><pre class="term">%s</pre>'%pre
 		if self.dump_cache==dump:
-			return '<?xml version="1.0"?><idem></idem>'
+			return '<idem/>'
 		else:
 			self.dump_cache=dump
 			return dump
@@ -1299,9 +1204,10 @@ class WebShell:
 				time.sleep(0.002)
 				req.write(self.multiplex.proc_dump(sid))
 				req.response_gzencode=1
-				req.response_headers['Content-Type']='text/xml'
+				req.response_headers['Content-Type']='text/html; charset=UTF-8'
 			else:
-				req.write('<?xml version="1.0"?><idem></idem>')
+				# Process is dead... show error
+				req.write('<idem/>')
 		else:
 			n=os.path.basename(req.PATH_INFO)
 			if n in self.files:
