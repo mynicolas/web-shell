@@ -397,6 +397,7 @@ class Terminal:
 		self.vt100_charset_g[g]=charset
 		self.vt100_charset_update()
 	def vt100_setmode(self,p,state):
+		# Set VT100 mode
 		p=self.vt100_parse_params(p,[],False)
 		for m in p:
 			if m=='4':
@@ -503,6 +504,7 @@ class Terminal:
 		# Numeric keypad mode
 		pass
 	def esc_IND(self):
+		# Index
 		self.ctrl_LF()
 	def esc_NEL(self):
 		# Next line
@@ -791,7 +793,7 @@ class Terminal:
 		# Soft terminal reset
 		self.reset_soft()
 		
-	# VT100 Terminal
+	# VT100 Parser
 	def vt100_parse_params(self,p,d,to_int=True):
 		# Process parameters (params p with defaults d)
 		# Add prefix to all parameters
@@ -825,14 +827,14 @@ class Terminal:
 		self.vt100_parse_len=0
 		self.vt100_parse_func=""
 		self.vt100_parse_param=""
-	def vt100_process(self):
+	def vt100_parse_process(self):
 		if self.vt100_parse_state=='esc':
 			# ESC mode
 			f=self.vt100_parse_func
 			try:
 				self.vt100_esc[f]()
 			except KeyError:
-				print 'ESC',f,'Unknown'
+#				print 'ESC',f,'Unknown'
 				pass
 			if self.vt100_parse_state=='esc':
 				self.vt100_parse_reset()
@@ -843,7 +845,7 @@ class Terminal:
 			try:
 				self.vt100_csi[f](p)
 			except KeyError:
-				print 'CSI',f,'Unknown'
+#				print 'CSI',f,'Unknown'
 				pass
 			if self.vt100_parse_state=='csi':
 				self.vt100_parse_reset()
@@ -859,7 +861,7 @@ class Terminal:
 		elif (char&0xffe0)==0x0080:
 			self.vt100_parse_reset('esc')
 			self.vt100_parse_func=chr(char-0x40)
-			self.vt100_process()
+			self.vt100_parse_process()
 			return True
 
 		if self.vt100_parse_state:
@@ -887,7 +889,7 @@ class Terminal:
 						else:
 							# Function byte
 							self.vt100_parse_func+=unichr(char)
-							self.vt100_process()
+							self.vt100_parse_process()
 						return True
 		self.vt100_lastchar=char
 		return False
@@ -905,9 +907,9 @@ class Terminal:
 		self.vt100_out=""
 		return d
 	def write(self,d):
-		f=open('/tmp/out.txt','a')
-		f.write(d)
-		f.close()
+#		f=open('/tmp/out.txt','a')
+#		f.write(d)
+#		f.close()
 		d=self.utf8_decode(d)
 		for c in d:
 			char=ord(c)
