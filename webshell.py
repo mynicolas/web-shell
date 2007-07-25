@@ -1255,14 +1255,14 @@ class WebShell:
 def main():
 	parser=optparse.OptionParser()
 	parser.add_option("-v",action="store_true",dest="version",default="",help="show version number")
-	parser.add_option("-i",dest="interface",default="0.0.0.0",help="set the server's interface")
+	parser.add_option("-i",dest="interface",default="0.0.0.0",help="listen on interface INTERFACE (default: 0.0.0.0)")
 	parser.add_option("-p",dest="port",default="8022",help="listen for queries on port PORT (default: 8022)")
-	parser.add_option("-c",dest="cmd",default=None,help="set the login command (default: /bin/login or ssh localhost)")
-	parser.add_option("-T",dest="env_term",default="xterm-color",help="set the TERM terminal emulation string (default: xterm-color)")
+	parser.add_option("-c",dest="cmd",default=None,help="set the shellcommand to CMD (default: /bin/login or ssh localhost)")
+	parser.add_option("-t",dest="term",default="xterm-color",help="set the terminal emulation string to TERM (default: xterm-color)")
 	parser.add_option("-l",action="store_true",dest="log",default=0,help="outputs connection log to stderr (default: quiet)")
-	parser.add_option("-f",action="store_true",dest="daemon",default=0,help="run as daemon in the background")
-	parser.add_option("-P",dest="pidfile",default="/var/run/webshell.pid",help="set the pidfile (default: /var/run/webshell.pid)")
-	parser.add_option("-u",dest="uid",help="set the daemon's user id")
+	parser.add_option("-d",action="store_true",dest="daemon",default=0,help="run as daemon in the background")
+	parser.add_option("-P",dest="pidfile",default="/var/run/webshell.pid",help="set the pidfile to PIDFILE (default: /var/run/webshell.pid)")
+	parser.add_option("-u",dest="uid",help="set the daemon's user id to UID")
 	(o,a)=parser.parse_args()
 	if o.version:
 		print 'WebShell '+version
@@ -1295,7 +1295,7 @@ def main():
 			sys.exit(0)
 	else:
 		print 'WebShell at %s, port %s' % (o.interface,o.port)
-	webshell=WebShell(o.cmd,o.env_term)
+	webshell=WebShell(o.cmd,o.term)
 	try:
 		qweb.QWebWSGIServer(webshell,ip=o.interface,port=int(o.port),threaded=0,log=o.log).serve_forever()
 	except KeyboardInterrupt:
