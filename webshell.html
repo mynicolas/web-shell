@@ -8,6 +8,10 @@
 <script type="text/javascript" src="webshell.js"></script>
 <script type="text/javascript"><!--
 var t;
+if(document.images) {
+	i = new Image();
+	i.src = "key.png";
+}
 window.onload=function() {
 	t=webshell.Terminal("term",80,24);
 	document.onkeypress=t.keypress;

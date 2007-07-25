@@ -19,8 +19,7 @@ class Terminal:
 	def __init__(self,w,h):
 		self.w=w
 		self.h=h
-		self.reset_hard()
-		
+		self.vt100_saved_attr=0
 		self.vt100_charset_graph=[
 			0x25ca,0x2026,0x2022,0x3f,
 			0xb6,0x3f,0xb0,0xb1,
@@ -32,7 +31,6 @@ class Terminal:
 			0x2260,0xa3,0xb7,0x7f
 		]
 		self.vt100_esc={
-			'[':	self.esc_CSI,
 			'#8':	self.esc_DECALN,
 			'(A':	self.esc_G0_0,
 			'(B':	self.esc_G0_1,
@@ -46,6 +44,8 @@ class Terminal:
 			')2':	self.esc_G1_4,
 			'7':	self.esc_DECSC,
 			'8':	self.esc_DECRC,
+			'=':	self.esc_DECKPAM,
+			'>':	self.esc_DECKPNM,
 			'D':	self.esc_IND,
 			'E':	self.esc_NEL,
 			'H':	self.esc_HTS,
@@ -55,6 +55,7 @@ class Terminal:
 			'P':	self.esc_DCS,
 			'X':	self.esc_SOS,
 			'Z':	self.esc_DECID,
+			'[':	self.esc_CSI,
 			'\\':	self.esc_ST,
 			']':	self.esc_OSC,
 			'^':	self.esc_PM,
@@ -147,6 +148,8 @@ class Terminal:
 			'k':'\x1b[23~',
 			'l':'\x1b[24~'
 		}
+		self.reset_hard()
+
 	# Reset functions
 	def reset_hard(self):
 		# Attribute mask: 0x0XFB0000
@@ -208,9 +211,6 @@ class Terminal:
 
 	# UTF-8 functions
 	def utf8_decode(self, d):
-#		try:
-#			d=unicode(d,'utf-8')
-#		except UnicodeDecodeError:
 		o=''
 		for c in d:
 			char=ord(c)
@@ -366,28 +366,75 @@ class Terminal:
 			self.scroll_line_right(self.cy,self.cx)
 		if self.vt100_charset_is_single_shift:
 			self.vt100_charset_is_single_shift=False
-		elif self.vt100_charset_is_graphical and (char&0xe0)==0x60:
+		elif self.vt100_charset_is_graphical and (char&0xffe0)==0x0060:
 			char=self.vt100_charset_graph[char-0x60]
 		self.poke(self.cy,self.cx,array.array('i',[self.attr|char]))
 		self.cursor_set_x(self.cx+1)
 		
-	# VT-100 terminal
-	def charset_update(self):
+	# VT100 CTRL, ESC, CSI handlers
+	def vt100_charset_update(self):
 		self.vt100_charset_is_graphical=(self.vt100_charset_g[self.vt100_charset_g_sel]==2)
-	def charset_set(self,g):
+	def vt100_charset_set(self,g):
 		# Invoke active character set
 		self.vt100_charset_g_sel=g
-		self.charset_update()
-	def charset_select(self,g,charset):
+		self.vt100_charset_update()
+	def vt100_charset_select(self,g,charset):
 		# Select charset
 		self.vt100_charset_g[g]=charset
-		self.charset_update()
+		self.vt100_charset_update()
+	def vt100_setmode(self,p,state):
+		p=self.vt100_parse_params(p,[],False)
+		for m in p:
+			if m=='4':
+				# Insertion replacement mode
+				self.vt100_mode_insert=state
+			elif m=='20':
+				# Linefeed/new line mode
+				self.vt100_mode_lfnewline=state
+			elif m=='?1':
+				# Cursor key mode
+				self.vt100_mode_cursorkey=state
+			elif m=='?3':
+				# Column mode
+				if self.vt100_mode_column_switch:
+					if state:
+						self.w=132
+					else:
+						self.w=80
+					self.reset()
+			elif m=='?5':
+				# Screen mode
+				self.vt100_mode_inverse=state
+			elif m=='?6':
+				# Region origin mode
+				self.vt100_mode_origin=state
+				if state:
+					self.cursor_set(self.scroll_area_y0,0)
+				else:
+					self.cursor_set(0,0)
+			elif m=='?7':
+				# Autowrap mode
+				self.vt100_mode_autowrap=state
+			elif m=='?25':
+				# Text cursor enable mode
+				self.vt100_mode_cursor=state
+			elif m=='?40':
+				# Column switch control
+				self.vt100_mode_column_switch=state
+			elif m=='?47':
+				# Alternate screen mode
+				if (state and not self.vt100_mode_alt_screen) or (not state and self.vt100_mode_alt_screen):
+					self.screen,self.screen2=self.screen2,self.screen
+				self.vt100_mode_alt_screen=state
+			elif m=='?67':
+				# Backspace/delete
+				self.vt100_mode_backspace=state
 	def ctrl_SO(self):
 		# Shift out
-		self.charset_set(1)
+		self.vt100_charset_set(1)
 	def ctrl_SI(self):
 		# Shift in
-		self.charset_set(0)
+		self.vt100_charset_set(0)
 	def esc_CSI(self):
 		# CSI start sequence
 		self.vt100_parse_reset('csi')
@@ -395,25 +442,25 @@ class Terminal:
 		# Screen alignment display
 		self.fill(0,0,self.h,self.w,0x00fe0045)
 	def esc_G0_0(self):
-		self.charset_select(0,0)
+		self.vt100_charset_select(0,0)
 	def esc_G0_1(self):
-		self.charset_select(0,1)
+		self.vt100_charset_select(0,1)
 	def esc_G0_2(self):
-		self.charset_select(0,2)
+		self.vt100_charset_select(0,2)
 	def esc_G0_3(self):
-		self.charset_select(0,3)
+		self.vt100_charset_select(0,3)
 	def esc_G0_4(self):
-		self.charset_select(0,4)
+		self.vt100_charset_select(0,4)
 	def esc_G1_0(self):
-		self.charset_select(1,0)
+		self.vt100_charset_select(1,0)
 	def esc_G1_1(self):
-		self.charset_select(1,1)
+		self.vt100_charset_select(1,1)
 	def esc_G1_2(self):
-		self.charset_select(1,2)
+		self.vt100_charset_select(1,2)
 	def esc_G1_3(self):
-		self.charset_select(1,3)
+		self.vt100_charset_select(1,3)
 	def esc_G1_4(self):
-		self.charset_select(1,4)
+		self.vt100_charset_select(1,4)
 	def esc_DECSC(self):
 		# Store cursor
 		self.vt100_saved_cx=self.cx
@@ -430,9 +477,15 @@ class Terminal:
 		self.attr=self.vt100_saved_attr
 		self.vt100_charset_g_sel=self.vt100_saved_charset_g_sel
 		self.vt100_charset_g=self.vt100_saved_charset_g[:]
-		self.charset_update()
+		self.vt100_charset_update()
 		self.vt100_mode_autowrap=self.vt100_saved_mode_autowrap
 		self.vt100_mode_origin=self.vt100_saved_mode_origin
+	def esc_DECKPAM(self):
+		# Application keypad mode
+		pass
+	def esc_DECKPNM(self):
+		# Numeric keypad mode
+		pass
 	def esc_IND(self):
 		self.ctrl_LF()
 	def esc_NEL(self):
@@ -702,10 +755,12 @@ class Terminal:
 			self.cursor_set(0,0)
 	def csi_SCP(self,p):
 		# Save cursor position
-		self.esc_DECSC()
+		self.vt100_saved_cx=self.cx
+		self.vt100_saved_cy=self.cy
 	def csi_RCP(self,p):
 		# Restore cursor position
-		self.esc_DECSC()
+		self.cx=self.vt100_saved_cx
+		self.cy=self.vt100_saved_cy
 	def csi_DECREQTPARM(self,p):
 		# Request terminal parameters
 		p=self.vt100_parse_params(p,[],False)
@@ -713,53 +768,8 @@ class Terminal:
 			self.vt100_out="\x1b[2;1;1;112;112;1;0x"
 		elif p[0]=='1':
 			self.vt100_out="\x1b[3;1;1;112;112;1;0x"
-	def vt100_setmode(self,p,state):
-		p=self.vt100_parse_params(p,[],False)
-		for m in p:
-			if m=='4':
-				# Insertion replacement mode
-				self.vt100_mode_insert=state
-			elif m=='20':
-				# Linefeed/new line mode
-				self.vt100_mode_lfnewline=state
-			elif m=='?1':
-				# Cursor key mode
-				self.vt100_mode_cursorkey=state
-			elif m=='?3':
-				# Column mode
-				if self.vt100_mode_column_switch:
-					if state:
-						self.w=132
-					else:
-						self.w=80
-					self.reset()
-			elif m=='?5':
-				# Screen mode
-				self.vt100_mode_inverse=state
-			elif m=='?6':
-				# Region origin mode
-				self.vt100_mode_origin=state
-				if state:
-					self.cursor_set(self.scroll_area_y0,0)
-				else:
-					self.cursor_set(0,0)
-			elif m=='?7':
-				# Autowrap mode
-				self.vt100_mode_autowrap=state
-			elif m=='?25':
-				# Text cursor enable mode
-				self.vt100_mode_cursor=state
-			elif m=='?40':
-				# Column switch control
-				self.vt100_mode_column_switch=state
-			elif m=='?47':
-				# Alternate screen mode
-				if (state and not self.vt100_mode_alt_screen) or (not state and self.vt100_mode_alt_screen):
-					self.screen,self.screen2=self.screen2,self.screen
-				self.vt100_mode_alt_screen=state
-			elif m=='?67':
-				# Backspace/delete
-				self.vt100_mode_backspace=state
+
+	# VT100 Terminal
 	def vt100_parse_params(self,p,d,to_int=True):
 		# Process parameters (params p with defaults d)
 		# Add prefix to all parameters
@@ -797,12 +807,10 @@ class Terminal:
 		if self.vt100_parse_state=='esc':
 			# ESC mode
 			f=self.vt100_parse_func
-#			if f!='[':
-#				print 'ESC code: ',f
 			try:
 				self.vt100_esc[f]()
 			except KeyError:
-#				print 'Unknown'
+				print 'ESC',f,'Unknown'
 				pass
 			if self.vt100_parse_state=='esc':
 				self.vt100_parse_reset()
@@ -810,11 +818,10 @@ class Terminal:
 			# CSI mode
 			f=self.vt100_parse_func
 			p=self.vt100_parse_param
-#			print 'CSI code: ',p,f
 			try:
 				self.vt100_csi[f](p)
 			except KeyError:
-#				print 'Unknown'
+				print 'CSI',f,'Unknown'
 				pass
 			if self.vt100_parse_state=='csi':
 				self.vt100_parse_reset()
@@ -984,7 +991,7 @@ class SynchronizedMethod:
 		return r
 
 class Multiplex:
-	def __init__(self,cmd=None):
+	def __init__(self,cmd=None,env_term=None):
 		# Set Linux signal handler
 		uname=commands.getoutput('uname')
 		if uname=='Linux':
@@ -992,6 +999,7 @@ class Multiplex:
 		# Session
 		self.session={}
 		self.cmd=cmd
+		self.env_term=env_term
 		# Synchronize methods
 		self.lock=threading.RLock()
 		for name in ['stop','proc_keepalive','proc_spawn','proc_kill','proc_read','proc_write','proc_dump']:
@@ -1058,7 +1066,7 @@ class Multiplex:
 			try:
 				os.putenv('COLUMNS',str(w))
 				os.putenv('LINES',str(h))
-				os.putenv('TERM','xterm-color')
+				os.putenv('TERM',self.env_term)
 				os.putenv('PATH',os.environ['PATH'])
 				os.putenv('LANG',ls[0]+'.UTF-8')
 				os.system(cmd)
@@ -1182,15 +1190,15 @@ class Multiplex:
 			self.proc_kill(sid)
 
 class WebShell:
-	def __init__(self,cmd=None,index_file='webshell.html'):
+	def __init__(self,cmd=None,env_term=None):
 		self.files={}
 		for i in ['css','html','js','png','jpg']:
 			for j in glob.glob('*.%s'%i):
 				self.files[j]=file(j).read()
-		self.files['index']=file(index_file).read()
+		self.files['index']=file('webshell.html').read()
 		self.mime = mimetypes.types_map.copy()
 		self.mime['.html']= 'text/html; charset=UTF-8'
-		self.multiplex = Multiplex(cmd)
+		self.multiplex = Multiplex(cmd,env_term)
 	def __call__(self, environ, start_response):
 		req = qweb.QWebRequest(environ, start_response,session=None)
 		if req.PATH_INFO.endswith('/u'):
@@ -1222,14 +1230,24 @@ class WebShell:
 
 def main():
 	parser=optparse.OptionParser()
-	parser.add_option("-p", "--port", dest="port", default="8022", help="Set the TCP port (default: 8022)")
-	parser.add_option("-c", "--command", dest="cmd", default=None,help="set the command (default: /bin/login or ssh localhost)")
-	parser.add_option("-l", "--log", action="store_true", dest="log",default=0,help="log requests to stderr (default: quiet mode)")
-	parser.add_option("-d", "--daemon", action="store_true", dest="daemon", default=0, help="run as daemon in the background")
-	parser.add_option("-P", "--pidfile",dest="pidfile",default="/var/run/webshell.pid",help="set the pidfile (default: /var/run/webshell.pid)")
-	parser.add_option("-i", "--index", dest="index_file", default="webshell.html",help="default index file (default: webshell.html)")
-	parser.add_option("-u", "--uid", dest="uid", help="Set the daemon's user id")
+	parser.add_option("-v",action="store_true",dest="version",default="",help="show version number")
+	parser.add_option("-i",dest="interface",default="0.0.0.0",help="set the server's interface")
+	parser.add_option("-p",dest="port",default="8022",help="listen for queries on port PORT (default: 8022)")
+	parser.add_option("-c",dest="cmd",default=None,help="set the login command (default: /bin/login or ssh localhost)")
+	parser.add_option("-T",dest="env_term",default="xterm-color",help="set the TERM terminal emulation string (default: xterm-color)")
+	parser.add_option("-l",action="store_true",dest="log",default=0,help="outputs connection log to stderr (default: quiet)")
+	parser.add_option("-f",action="store_true",dest="daemon",default=0,help="run as daemon in the background")
+	parser.add_option("-P",dest="pidfile",default="/var/run/webshell.pid",help="set the pidfile (default: /var/run/webshell.pid)")
+	parser.add_option("-u",dest="uid",help="set the daemon's user id")
 	(o,a)=parser.parse_args()
+	if o.version:
+		print 'WebShell '+version
+		sys.exit(0)
+	try:
+		o.port=int(o.port)
+	except ValueError:
+		print 'Invalid parameters'
+		sys.exit(0)
 	if o.daemon:
 		pid=os.fork()
 		if pid==0:
@@ -1250,14 +1268,13 @@ def main():
 				file(o.pidfile,'w+').write(str(pid)+'\n')
 			except:
 				pass
-			print 'WebShell '+version+' at http://localhost:%s/ pid: %d' % (o.port,pid)
 			sys.exit(0)
 	else:
-		print 'WebShell '+version+' at http://localhost:%s/' % o.port
-	webshell=WebShell(o.cmd,o.index_file)
+		print 'WebShell at %s, port %s' % (o.interface,o.port)
+	webshell=WebShell(o.cmd,o.env_term)
 	try:
-		qweb.QWebWSGIServer(webshell,ip='localhost',port=int(o.port),threaded=0,log=o.log).serve_forever()
-	except KeyboardInterrupt,e:
+		qweb.QWebWSGIServer(webshell,ip=o.interface,port=int(o.port),threaded=0,log=o.log).serve_forever()
+	except KeyboardInterrupt:
 		print 'Stopped'
 	webshell.stop()
 
