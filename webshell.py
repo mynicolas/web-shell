@@ -19,7 +19,6 @@ class Terminal:
 	def __init__(self,w,h):
 		self.w=w
 		self.h=h
-		self.vt100_saved_attr=0
 		self.vt100_charset_graph=[
 			0x25ca,0x2026,0x2022,0x3f,
 			0xb6,0x3f,0xb0,0xb1,
@@ -195,6 +194,8 @@ class Terminal:
 		
 		# Soft reset
 		self.reset()
+		self.esc_DECSC()
+		self.vt100_saved2=self.vt100_saved
 		self.esc_DECSC()
 	def reset(self):
 		# Screen
@@ -425,6 +426,7 @@ class Terminal:
 				# Alternate screen mode
 				if (state and not self.vt100_mode_alt_screen) or (not state and self.vt100_mode_alt_screen):
 					self.screen,self.screen2=self.screen2,self.screen
+					self.vt100_saved,self.vt100_saved2=self.vt100_saved2,self.vt100_saved
 				self.vt100_mode_alt_screen=state
 			elif m=='?67':
 				# Backspace/delete
@@ -463,23 +465,24 @@ class Terminal:
 		self.vt100_charset_select(1,4)
 	def esc_DECSC(self):
 		# Store cursor
-		self.vt100_saved_cx=self.cx
-		self.vt100_saved_cy=self.cy
-		self.vt100_saved_attr=self.attr
-		self.vt100_saved_charset_g_sel=self.vt100_charset_g_sel
-		self.vt100_saved_charset_g=self.vt100_charset_g[:]
-		self.vt100_saved_mode_autowrap=self.vt100_mode_autowrap
-		self.vt100_saved_mode_origin=self.vt100_mode_origin
+		self.vt100_saved={}
+		self.vt100_saved['cx']=self.cx
+		self.vt100_saved['cy']=self.cy
+		self.vt100_saved['attr']=self.attr
+		self.vt100_saved['charset_g_sel']=self.vt100_charset_g_sel
+		self.vt100_saved['charset_g']=self.vt100_charset_g[:]
+		self.vt100_saved['mode_autowrap']=self.vt100_mode_autowrap
+		self.vt100_saved['mode_origin']=self.vt100_mode_origin
 	def esc_DECRC(self):
 		# Retore cursor
-		self.cx=self.vt100_saved_cx
-		self.cy=self.vt100_saved_cy
-		self.attr=self.vt100_saved_attr
-		self.vt100_charset_g_sel=self.vt100_saved_charset_g_sel
-		self.vt100_charset_g=self.vt100_saved_charset_g[:]
+		self.cx=self.vt100_saved['cx']
+		self.cy=self.vt100_saved['cy']
+		self.attr=self.vt100_saved['attr']
+		self.vt100_charset_g_sel=self.vt100_saved['charset_g_sel']
+		self.vt100_charset_g=self.vt100_saved['charset_g'][:]
 		self.vt100_charset_update()
-		self.vt100_mode_autowrap=self.vt100_saved_mode_autowrap
-		self.vt100_mode_origin=self.vt100_saved_mode_origin
+		self.vt100_mode_autowrap=self.vt100_saved['mode_autowrap']
+		self.vt100_mode_origin=self.vt100_saved['mode_origin']
 	def esc_DECKPAM(self):
 		# Application keypad mode
 		pass
