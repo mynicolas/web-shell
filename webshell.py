@@ -98,6 +98,7 @@ class Terminal:
 			's':	self.csi_SCP,
 			'u':	self.csi_RCP,
 			'x':	self.csi_DECREQTPARM,
+			'!p':	self.csi_DECSTR,
 		}
 		self.vt100_keyfilter_ansikeys={
 			'A':'\x1b[A',
@@ -162,15 +163,38 @@ class Terminal:
 		self.utf8_units_count=0
 		self.utf8_units_received=0
 		self.utf8_char=0
+		# Key filter
+		self.vt100_keyfilter_escape=False
+		# Last char
+		self.vt100_lastchar=0
+		# Control sequences
+		self.vt100_parse_len=0
+		self.vt100_parse_state=""
+		self.vt100_parse_func=""
+		self.vt100_parse_param=""
+		# Buffers
+		self.vt100_out=""
+		# Caches
+		self.dump_cache=""
+		# Invoke other resets
+		self.reset_screen()
+		self.reset_soft()
+	def reset_soft(self):
+		# Attribute mask: 0x0XFB0000
+		#  X: Bit 0 - Underlined
+		#     Bit 1 - Negative
+		#     Bit 2 - Concealed
+		#  F: Foreground
+		#  B: Background
+		self.attr=0x00fe0000
+		# Scroll parameters
+		self.scroll_area_y0=0
+		self.scroll_area_y1=self.h
 		# Character sets
 		self.vt100_charset_is_single_shift=False
 		self.vt100_charset_is_graphical=False
 		self.vt100_charset_g_sel=0
 		self.vt100_charset_g=[0,0]
-		# Key filter
-		self.vt100_keyfilter_escape=False
-		# Last char
-		self.vt100_lastchar=32
 		# Modes
 		self.vt100_mode_insert=False
 		self.vt100_mode_lfnewline=False
@@ -182,22 +206,11 @@ class Terminal:
 		self.vt100_mode_cursor=True
 		self.vt100_mode_alt_screen=False
 		self.vt100_mode_backspace=False
-		# Control sequences
-		self.vt100_parse_len=0
-		self.vt100_parse_state=""
-		self.vt100_parse_func=""
-		self.vt100_parse_param=""
-		# Buffers
-		self.vt100_out=""
-		# Caches
-		self.dump_cache=""
-		
-		# Soft reset
-		self.reset()
+		# Init DECSC state
 		self.esc_DECSC()
 		self.vt100_saved2=self.vt100_saved
 		self.esc_DECSC()
-	def reset(self):
+	def reset_screen(self):
 		# Screen
 		self.screen=array.array('i',[self.attr|0x20]*self.w*self.h)
 		self.screen2=array.array('i',[self.attr|0x20]*self.w*self.h)
@@ -209,7 +222,7 @@ class Terminal:
 		self.cy=0
 		# Tab stops
 		self.tab_stops=range(0,self.w,8)
-
+		
 	# UTF-8 functions
 	def utf8_decode(self, d):
 		o=''
@@ -402,7 +415,7 @@ class Terminal:
 						self.w=132
 					else:
 						self.w=80
-					self.reset()
+					self.reset_screen()
 			elif m=='?5':
 				# Screen mode
 				self.vt100_mode_inverse=state
@@ -652,10 +665,13 @@ class Terminal:
 	def csi_REP(self,p):
 		# Repeat
 		p=self.vt100_parse_params(p,[1])
+		if self.vt100_lastchar<32:
+			return
 		n=min(2000,max(1,p[0]))
 		while n:
 			self.dumb_echo(self.vt100_lastchar)
 			n-=1
+		self.vt100_lastchar=0
 	def csi_DA(self,p):
 		# Device attributes
 		p=self.vt100_parse_params(p,['0'],False)
@@ -771,7 +787,10 @@ class Terminal:
 			self.vt100_out="\x1b[2;1;1;112;112;1;0x"
 		elif p[0]=='1':
 			self.vt100_out="\x1b[3;1;1;112;112;1;0x"
-
+	def csi_DECSTR(self,p):
+		# Soft terminal reset
+		self.reset_soft()
+		
 	# VT100 Terminal
 	def vt100_parse_params(self,p,d,to_int=True):
 		# Process parameters (params p with defaults d)
@@ -870,6 +889,7 @@ class Terminal:
 							self.vt100_parse_func+=unichr(char)
 							self.vt100_process()
 						return True
+		self.vt100_lastchar=char
 		return False
 
 	# External interface
@@ -896,7 +916,6 @@ class Terminal:
 			if self.dumb_write(char):
 				continue
 			if char<=0xffff:
-				self.vt100_lastchar=char
 				self.dumb_echo(char)
 		return True
 	def pipe(self,d):
