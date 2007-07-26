@@ -3,14 +3,19 @@
 """ WebShell Server """
 """ Released under the GPL 2.0 by Marc S. Ressl """
 
-version = "0.9.0"
+version = "0.9.1"
 
 import array, time, glob, optparse, random, re
-import socket, os, sys, pty, signal, select, commands, threading, fcntl, termios, struct, pwd
+import socket, os, sys, pty, signal, select, gzip
+import commands, threading, fcntl, termios, struct, pwd
 import cgi, mimetypes
 from SocketServer import BaseServer
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from OpenSSL import SSL
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
 os.chdir(os.path.normpath(os.path.dirname(__file__)))
 # Optional: Add QWeb in sys path
@@ -1237,7 +1242,7 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 		self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
 	def do_GET(self):
 		path = self.path.split('?', 1)
-		if path[0] == '/u' and len(path) > 1:
+		if path[0] == '/u':
 			try:
 				p = cgi.parse_qs(path[1], True)
 				sid = int(p['s'][0])
@@ -1251,10 +1256,11 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 					time.sleep(0.002)
 					content_type = 'text/html'
 					content_data = multiplex.proc_dump(sid)
+					content_gzip = True
 				else:
 					self.send_error(400, 'Disconnected')
 					return
-			except (KeyError, ValueError):
+			except (KeyError, ValueError, IndexError):
 				self.send_error(400, 'Invalid parameters')
 				return
 		else:
@@ -1266,11 +1272,17 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 			content_type = mime.get(
 				os.path.splitext(f)[1].lower(), 'application/octet-stream')
 			content_data = files[f]
-
-#		hd = cgi.parse_header(self.headers)
+			content_gzip = False
 
 		self.send_response(200)
 		self.send_header('Content-Type', content_type)
+		if content_gzip and self.headers.get('Accept-Encoding','').find('gzip') != -1:
+			zout = StringIO.StringIO()
+			zfile = gzip.GzipFile(mode = 'wb', fileobj = zout)
+			zfile.write(''.join(content_data))
+			zfile.close()
+			content_data = zout.getvalue()
+			self.send_header('Content-Encoding', 'gzip')
 		self.send_header('Content-Length', len(content_data))
 		self.end_headers()
 		self.wfile.write(content_data)
