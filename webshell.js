@@ -4,7 +4,7 @@ webshell.TerminalClass=function(id,width,height) {
 	if(window.ActiveXObject)
 		ie=1;
 	var sid=""+Math.round(Math.random()*1000000000);
-	var query1="s="+sid+"&w="+width+"&h="+height+"&k=";
+	var query="s="+sid+"&w="+width+"&h="+height+"&k=";
 	var buf="";
 	var timeout;
 	var keybuf=[];
@@ -13,8 +13,6 @@ webshell.TerminalClass=function(id,width,height) {
 
 	var div=document.getElementById(id);
 
-	var opt_get=true;
-
 	function update() {
 		if(sending==0) {
 			sending=1;
@@ -22,36 +20,29 @@ webshell.TerminalClass=function(id,width,height) {
 			var send="";
 			while(keybuf.length>0)
 				send+=keybuf.pop();
-			var query=query1+send;
-			if(opt_get) {
-				r.open("GET","u?"+query,true);
-				if(ie)
-					r.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
-			} else
-				r.open("POST","u",true);
+			r.open("GET","u?"+query+send,true);
+			if(ie)
+				r.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
 			r.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 			r.onreadystatechange = function () {
-				if (r.readyState==4) {
-					if(r.status==200) {
-						html=r.responseText;
-						if(html!="<idem/>") {
-							div.innerHTML=html;
-							rmax=100;
-						} else {
-							rmax*=2;
-							if(rmax>2000)
-								rmax=2000;
-						}
-						sending=0;
-						timeout=window.setTimeout(update,rmax);
-					}// else
-//						debug("Connection error.");
-				}
+				if(r.readyState!=4)
+					return;
+				if(r.status==200) {
+					html=r.responseText;
+					if(html.length>0) {
+						div.innerHTML=html;
+						rmax=100;
+					} else {
+						rmax*=2;
+						if(rmax>2000)
+							rmax=2000;
+					}
+					sending=0;
+					timeout=window.setTimeout(update,rmax);
+				} else
+					alert("Disconnected.")
 			}
-			if (opt_get)
-				r.send(null);
-			else
-				r.send(query);
+			r.send(null);
 		}
 	}
 	function queue(s) {
@@ -100,10 +91,8 @@ webshell.TerminalClass=function(id,width,height) {
 		if (!ev) var ev=window.event;
 		var kc;
 
-		if (ev.keyCode)
-			kc=ev.keyCode;
-		if (ev.which)
-			kc=ev.which;
+		if (ev.keyCode) kc=ev.keyCode;
+		if (ev.which) kc=ev.which;
 		if (ev.ctrlKey) {
 			if (kc>=0 && kc<=32) kc=kc;
 			else if (kc>=65 && kc<=90) kc-=64;
