@@ -754,7 +754,7 @@ class Terminal:
 			y = self.cy + 1
 			self.vt100_out = '\x1b[%d;%dR'%(y, x)	
 		elif p[0] == '7':
-			self.vt100_out = "WebShell"
+			self.vt100_out = 'WebShell'
 		elif p[0] == '8':
 			self.vt100_out = version
 		elif p[0] == '?6':
@@ -980,7 +980,7 @@ class Terminal:
 						ul = ' ul'
 					else:
 						ul = ''
-					dump += u'<span class = "f%x b%x%s">'%(fg, bg, ul)
+					dump += u'<span class="f%x b%x%s">'%(fg, bg, ul)
 					attr_ = attr
 				# Escape HTML characters
 				if char == 38:
@@ -1085,9 +1085,9 @@ class Multiplex:
 				login = sys.stdin.readline().strip()
 				if re.match('^[0-9A-Za-z-_. ]+$', login):
 					cmd = 'ssh'
-					cmd += ' -oPreferredAuthentications = password'
-					cmd += ' -oNoHostAuthenticationForLocalhost = yes'
-					cmd += ' -oLogLevel = FATAL'
+					cmd += ' -oPreferredAuthentications=keyboard-interactive,password'
+					cmd += ' -oNoHostAuthenticationForLocalhost=yes'
+					cmd += ' -oLogLevel=FATAL'
 					cmd += ' -F/dev/null -l' + login +' localhost'
 				else:
 					os._exit(0)
