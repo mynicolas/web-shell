@@ -49,11 +49,9 @@ installed on your system. You will also have to install the
 pyOpenSSL python extensions to OpenSSL.
 
 Next, you need to generate a server certificate. From the WebShell
-directory enter these commands to quickly generate a certificate:
+directory enter this command to quickly generate a certificate:
 
-    export RANDFILE=/dev/random
-    openssl req $@ -new -x509 -days 365 -nodes -out webshell.pem \
-	-keyout webshell.pem
+    ./make_certificate.sh
 
 Now issue this command to run the server:
 
