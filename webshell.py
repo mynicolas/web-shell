@@ -11,7 +11,14 @@ import commands, threading, fcntl, termios, struct, pwd
 import cgi, mimetypes
 from SocketServer import BaseServer
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from OpenSSL import SSL
+
+try:
+	openssl_installed = False
+	from OpenSSL import SSL
+	openssl_installed = True
+except ImportError:
+	pass
+
 try:
     import cStringIO as StringIO
 except ImportError:
@@ -1292,22 +1299,23 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 		pass
 
 class SecureHTTPServer(HTTPServer):
-	def __init__(self, server_address, HandlerClass, cmd=None, env_term=None):
+	def __init__(self, server_address, HandlerClass, cmd=None, env_term=None, ssl_enabled=True, ssl_cert=None):
 		BaseServer.__init__(self, server_address, HandlerClass)
-
+		# Init webshell instances
 		self.webshell_files = {}
 		for i in ['css', 'html', 'js', 'png', 'jpg']:
 			for j in glob.glob('*.%s' % i):
 				self.webshell_files[j] = file(j).read()
 		self.webshell_mime = mimetypes.types_map.copy()
 		self.webshell_multiplex = Multiplex(cmd, env_term)
-
-		ctx = SSL.Context(SSL.SSLv23_METHOD)
-		fpem = 'webshell.pem'
-		ctx.use_privatekey_file(fpem)
-		ctx.use_certificate_file(fpem)
+		# Init http(s) server
+		if ssl_enabled:
+			ctx = SSL.Context(SSL.SSLv23_METHOD)
+			ctx.use_privatekey_file(ssl_cert)
+			ctx.use_certificate_file(ssl_cert)
 		self.socket = socket.socket(self.address_family, self.socket_type)
-		self.socket = SSL.Connection(ctx, self.socket)
+		if ssl_enabled:
+			self.socket = SSL.Connection(ctx, self.socket)
 		self.server_bind()
 		self.server_activate()
 	def stop_multiplex(self):
@@ -1317,26 +1325,26 @@ def main():
 	parser = optparse.OptionParser()
 	parser.add_option("-v", action = "store_true", dest = "version", default = "", 
 		help = "show version number")
-	parser.add_option("-i", dest = "interface", default = "0.0.0.0", 
+	parser.add_option("-i", dest = "interface", default = "", 
 		help = "listen on interface INTERFACE (default: 0.0.0.0)")
 	parser.add_option("-p", dest = "port", default = "8022", 
 		help = "listen on port PORT (default: 8022)")
 	parser.add_option("-c", dest = "cmd", default = None, 
-			help = "set shellcommand to CMD (default: /bin/login or ssh localhost)")
+			help = "set shellcommand (default: /bin/login or ssh localhost)")
 	parser.add_option("-t", dest = "term", default = "xterm-color",
-		help = "set terminal emulation string to TERM (default: xterm-color)")
+		help = "set terminal emulation string (default: xterm-color)")
 	parser.add_option("-l", action = "store_true", dest = "log", default = 0, 
 		help = "output connection log to stderr (default: quiet)")
 	parser.add_option("-d", action = "store_true", dest = "daemon", default = 0, 
 		help = "run as daemon in the background")
 	parser.add_option("-P", dest = "pidfile", default = "/var/run/webshell.pid",
-		help = "set pidfile to PIDFILE (default: /var/run/webshell.pid)")
+		help = "set pidfile (default: /var/run/webshell.pid)")
 	parser.add_option("-u", dest = "uid", 
-		help = "set daemon's user id to UID")
-	parser.add_option("--ssl-disable", action = "store_false", dest = "ssl_disable", default = 1,
-		help = "set pidfile to PIDFILE (default: /var/run/webshell.pid)")
+		help = "set daemon's user id")
+	parser.add_option("--ssl-disable", action = "store_false", dest = "ssl_enabled", default = 1,
+		help = "disable SSL, set listen interface to localhost")
 	parser.add_option("--ssl-cert", dest = "ssl_cert", default = "webshell.pem",
-		help = "set pidfile to PIDFILE (default: /var/run/webshell.pid)")
+		help = "set SSL certificate (default: webshell.pem)")
 	(o, a) = parser.parse_args()
 	if o.version:
 		print 'WebShell ' + version
@@ -1347,6 +1355,13 @@ def main():
 	except ValueError:
 		print 'Invalid parameters'
 		sys.exit(0)
+	if (not openssl_installed) & o.ssl_enabled:
+		print 'The python SSL extensions seem to be not installed.'
+		print 'You can run WebShell without SSL encryption with the --ssl-disable command line switch.'
+		sys.exit(0)
+	if not o.ssl_enabled:
+		if len(o.interface) == 0:
+			o.interface='localhost'
 	# Daemon mode
 	if o.daemon:
 		pid = os.fork()
@@ -1372,10 +1387,13 @@ def main():
 	# Run server
 	try:
 		server_address = (o.interface, o.port)
-		httpd = SecureHTTPServer(server_address, WebShellRequestHandler, o.cmd, o.term)
+		httpd = SecureHTTPServer(server_address, WebShellRequestHandler, o.cmd, o.term, o.ssl_enabled, o.ssl_cert)
 		sa = httpd.socket.getsockname()
 		if not o.daemon:
-			print 'WebShell at %s, port %s' % (sa[0], sa[1])
+			scheme = 'http'
+			if o.ssl_enabled:
+				scheme += 's'
+			print 'WebShell (%s) at %s, port %s' % (scheme, sa[0], sa[1])
 		httpd.serve_forever()
 	except KeyboardInterrupt:
 		httpd.stop_multiplex()
