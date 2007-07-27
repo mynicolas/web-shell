@@ -1090,8 +1090,6 @@ class Multiplex:
 		if pid == 0:
 			if self.cmd:
 				cmd = self.cmd
-			elif os.getuid() == 0:
-				cmd = '/bin/login'
 			else:
 				sys.stdout.write("Login: ")
 				login = sys.stdin.readline().strip()
@@ -1326,11 +1324,11 @@ def main():
 	parser.add_option("-v", action = "store_true", dest = "version", default = "", 
 		help = "show version number")
 	parser.add_option("-i", dest = "interface", default = "", 
-		help = "listen on interface INTERFACE (default: 0.0.0.0)")
+		help = "set listen interface (default: 0.0.0.0)")
 	parser.add_option("-p", dest = "port", default = "8022", 
-		help = "listen on port PORT (default: 8022)")
+		help = "set listen port (default: 8022)")
 	parser.add_option("-c", dest = "cmd", default = None, 
-			help = "set shellcommand (default: /bin/login or ssh localhost)")
+		help = "set shell command (default: ssh localhost)")
 	parser.add_option("-t", dest = "term", default = "xterm-color",
 		help = "set terminal emulation string (default: xterm-color)")
 	parser.add_option("-l", action = "store_true", dest = "log", default = 0, 
@@ -1340,11 +1338,11 @@ def main():
 	parser.add_option("-P", dest = "pidfile", default = "/var/run/webshell.pid",
 		help = "set pidfile (default: /var/run/webshell.pid)")
 	parser.add_option("-u", dest = "uid", 
-		help = "set daemon's user id")
+		help = "set daemon user id")
 	parser.add_option("--ssl-disable", action = "store_false", dest = "ssl_enabled", default = 1,
 		help = "disable SSL, set listen interface to localhost")
 	parser.add_option("--ssl-cert", dest = "ssl_cert", default = "webshell.pem",
-		help = "set SSL certificate (default: webshell.pem)")
+		help = "set SSL certificate file (default: webshell.pem)")
 	(o, a) = parser.parse_args()
 	if o.version:
 		print 'WebShell ' + version
