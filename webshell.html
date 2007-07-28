@@ -3,24 +3,25 @@
 <head>
 <title>WebShell 0.9.2</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-<meta name="viewport" content="initial-scale=1.0, width=480, height=268" />
+<meta name="viewport" content="initial-scale=1.0,width=480,height=268" />
 <link rel="stylesheet" type="text/css" href="webshell.css"/>
 <script type="text/javascript" src="webshell.js"></script>
 <script type="text/javascript"><!--
 var t;
-if(document.images) {
-	i = new Image();
-	i.src = "key.png";
-}
 window.onload=function() {
-	t=webshell.Terminal("term",80,24);
+	if(document.images) {
+		i=new Image();
+		i.src="key.png";
+	}
+	t=webshell.Terminal("term",80,24,ondisconnect);
 	document.onkeypress=t.keypress;
-	document.onkeydown=t.keydown;
+	document.onkeydown=t.keydown; 
 	window.scrollTo(0,1);
-	so(0);
+	startMsgAnim('Tap for keyboard',800,false);
 };
+window.onselectstart=function() {return false;};
+// Set overlay
 function so(value) {
-	// Set overlay
 	for(var i=0;i<5;i++)
 		document.getElementById("ol"+i).style.display=(value == i)?'block':'none';
 	if(value == 0) {
@@ -30,40 +31,83 @@ function so(value) {
 		document.onkeypress=null;
 		document.onkeydown=null;
 	}
+	document.getElementById("ctrltextinput").focus();
 }
+// Send text
 function st() {
-	// Send text
 	var textinput=document.getElementById("ctrltextinput").value;
 	document.getElementById("ctrltextinput").value='';
 	for(var i=0;i<textinput.length;i++)
 		t.sendkey(textinput.charCodeAt(i));
 	if(!textinput.length)
 		t.sendkey(13);
-	so(0);
+	document.getElementById("ctrltextinput").focus();
 }
+// Send key
 function sk(value) {
-	// Send key
 	var textinput=document.getElementById("ctrltextinput").value;
-	if (textinput.length)
+	if(textinput.length)
 		st();
 	t.sendkey(value);
-	so(0);
+}
+// Send key and go back
+function sb(value) {
+	sk(value);
+	so(1);
+}
+function ondisconnect() {
+	startMsgAnim('Disconnected',0,true)
+}
+// Animate box
+var msgAnim={timer:null,up:false,duration:300,start:null};
+function msgAnimTimer() {
+	var time=(new Date).getTime();
+	var fraction;
+	alpha=(time-msgAnim.start)/msgAnim.duration;
+	if(alpha<0.0)
+		alpha=0.0;
+	else if (alpha>1.0) {
+		alpha=1.0;
+		endMsgAnim();
+	}
+	if(!msgAnim.up)
+		alpha=1.0-alpha;
+    var sine=Math.sin((Math.PI/2.0)*alpha);
+	document.getElementById('ol4').style.opacity=sine*sine*0.66;
+}
+function startMsgAnim(msg,delay,up) {
+	if(msgAnim.timer!=null) {
+		clearInterval(msgAnim.timer);
+		msgAnim.timer=null;
+	}
+	document.getElementById('ol4').innerHTML=msg;
+	document.getElementById('ol4').style.opacity=up?'0.0':'1.0';
+	so(4);
+	msgAnim.up=up;
+	msgAnim.start=(new Date).getTime()+delay-60;
+	msgAnim.timer=setInterval('msgAnimTimer();',60);
+}
+function endMsgAnim () {
+	if(msgAnim.timer!=null) {
+		clearInterval(msgAnim.timer);
+		msgAnim.timer=null;
+	}
+	if(!msgAnim.up)
+		so(0);
 }
 --></script>
 </head>
 <body>
+<div class="container">
 <div id="term" class="term"></div>
 
-<div id="ol0" class="ol">
-<div class="olBg" onClick="so(1)"></div>
+<div id="ol0" class="olShell" onClick="so(1)">
 </div>
 
-<div id="ol1" class="ol">
-<div class="olBg" onClick="so(0)"></div>
-<div class="olGray"></div>
-<div class="olCtrl">
+<div id="ol1" class="olCtrl">
 <table>
 <tr>
+<td><div class="k" onclick="so(0)"><div class="ks">back</div></div></td>
 <td colspan="4">
 <form name="textform" onsubmit="st();return false;">
 <div class="ctrltextborder"><input type="text" id="ctrltextinput" name="textinput" /></div></form>
@@ -72,102 +116,93 @@ function sk(value) {
 <td><div class="k" onClick="sk(13)"><div class="ks">enter</div></div></td>
 </tr>
 <tr>
-<td><div class="k" onClick="sk(27)"><div class="ks">ESC</div></div></td>
+<td><div class="k" onClick="so(3)"><div class="ks">F</div></div></td>
+<td><div class="k" onClick="sk(63273)"><div class="ks">home</div></div></td>
 <td><div class="k" onClick="sk(63276)"><div class="ks">&#8598;</div></div></td>
 <td><div class="k" onClick="sk(63232)"><div class="ks">&#8673;</div></div></td>
 <td><div class="k" onClick="sk(63277)"><div class="ks">&#8600;</div></div></td>
-<td><div class="k" onClick="sk(63273)"><div class="ks">home</div></div></td>
-<td><div class="k" onClick="so(3)"><div class="ks">F</div></div></td>
+<td><div class="k" onClick="sk(96)"><div class="ks">`</div></div></td>
+<td><div class="k" onClick="sk(27)"><div class="ks">ESC</div></div></td>
 </tr>
 <tr>
-<td><div class="k" onClick="sk(9)"><div class="ks">tab</div></div></td>
+<td><div class="k" onClick="so(2)"><div class="ks">ctrl</div></div></td>
+<td><div class="k" onClick="sk(63275)"><div class="ks">end</div></div></td>
 <td><div class="k" onClick="sk(63234)"><div class="ks">&#8672;</div></div></td>
 <td><div class="k" onClick="sk(63233)"><div class="ks">&#8675;</div></div></td>
 <td><div class="k" onClick="sk(63235)"><div class="ks">&#8674;</div></div></td>
-<td><div class="k" onClick="sk(63275)"><div class="ks">end</div></div></td>
-<td><div class="k" onClick="so(2)"><div class="ks">ctrl</div></div></td>
-</tr>
-<tr>
-<td><div class="k"><div class="ks">help</div></div></td>
-<td><div class="k" onClick="sk(96)"><div class="ks">`</div></div></td>
+<td><div class="k" onClick="sk(32)"><div class="ks">space</div></div></td>
+<td><div class="k" onClick="sk(9)"><div class="ks">tab</div></div></td>
 </tr>
 </table>
 </div>
-</div>
 
-<div id="ol2" class="ol">
-<div class="olBg" onClick="so(0)"></div>
-<div class="olGray"></div>
-<div class="olCtrl">
+<div id="ol2" class="olCtrl">
 <table>
 <tr>
-<td><div class="k" onClick="sk(1)"><div class="ks">^A</div></div></td>
-<td><div class="k" onClick="sk(2)"><div class="ks">^B</div></div></td>
-<td><div class="k" onClick="sk(3)"><div class="ks">^C</div></div></td>
-<td><div class="k" onClick="sk(4)"><div class="ks">^D</div></div></td>
-<td><div class="k" onClick="sk(5)"><div class="ks">^E</div></div></td>
-<td><div class="k" onClick="sk(6)"><div class="ks">^F</div></div></td>
+<td><div class="k" onclick="so(1)"><div class="ks">back</div></div></td>
+<td><div class="k" onClick="sb(1)"><div class="ks">^A</div></div></td>
+<td><div class="k" onClick="sb(2)"><div class="ks">^B</div></div></td>
+<td><div class="k" onClick="sb(3)"><div class="ks">^C</div></div></td>
+<td><div class="k" onClick="sb(4)"><div class="ks">^D</div></div></td>
+<td><div class="k" onClick="sb(5)"><div class="ks">^E</div></div></td>
+<td><div class="k" onClick="sb(6)"><div class="ks">^F</div></div></td>
 </tr>
 <tr>
-<td><div class="k" onClick="sk(7)"><div class="ks">^G</div></div></td>
-<td><div class="k" onClick="sk(10)"><div class="ks">^J</div></div></td>
-<td><div class="k" onClick="sk(11)"><div class="ks">^K</div></div></td>
-<td><div class="k" onClick="sk(12)"><div class="ks">^L</div></div></td>
-<td><div class="k" onClick="sk(14)"><div class="ks">^N</div></div></td>
-<td><div class="k" onClick="sk(15)"><div class="ks">^O</div></div></td>
+<td><div class="k" onClick="sb(7)"><div class="ks">^G</div></div></td>
+<td><div class="k" onClick="sb(10)"><div class="ks">^J</div></div></td>
+<td><div class="k" onClick="sb(11)"><div class="ks">^K</div></div></td>
+<td><div class="k" onClick="sb(12)"><div class="ks">^L</div></div></td>
+<td><div class="k" onClick="sb(14)"><div class="ks">^N</div></div></td>
+<td><div class="k" onClick="sb(15)"><div class="ks">^O</div></div></td>
+<td><div class="k" onClick="sb(16)"><div class="ks">^P</div></div></td>
 </tr>
 <tr>
-<td><div class="k" onClick="sk(16)"><div class="ks">^P</div></div></td>
-<td><div class="k" onClick="sk(17)"><div class="ks">^Q</div></div></td>
-<td><div class="k" onClick="sk(18)"><div class="ks">^R</div></div></td>
-<td><div class="k" onClick="sk(19)"><div class="ks">^S</div></div></td>
-<td><div class="k" onClick="sk(20)"><div class="ks">^T</div></div></td>
-<td><div class="k" onClick="sk(21)"><div class="ks">^U</div></div></td>
+<td><div class="k" onClick="sb(17)"><div class="ks">^Q</div></div></td>
+<td><div class="k" onClick="sb(18)"><div class="ks">^R</div></div></td>
+<td><div class="k" onClick="sb(19)"><div class="ks">^S</div></div></td>
+<td><div class="k" onClick="sb(20)"><div class="ks">^T</div></div></td>
+<td><div class="k" onClick="sb(21)"><div class="ks">^U</div></div></td>
+<td><div class="k" onClick="sb(22)"><div class="ks">^V</div></div></td>
+<td><div class="k" onClick="sb(23)"><div class="ks">^W</div></div></td>
 </tr>
 <tr>
-<td><div class="k" onClick="sk(22)"><div class="ks">^V</div></div></td>
-<td><div class="k" onClick="sk(23)"><div class="ks">^W</div></div></td>
-<td><div class="k" onClick="sk(24)"><div class="ks">^X</div></div></td>
-<td><div class="k" onClick="sk(25)"><div class="ks">^Y</div></div></td>
-<td><div class="k" onClick="sk(26)"><div class="ks">^Z</div></div></td>
-<td><div class="k" onClick="sk(29)"><div class="ks">^]</div></div></td>
+<td><div class="k" onClick="sb(24)"><div class="ks">^X</div></div></td>
+<td><div class="k" onClick="sb(25)"><div class="ks">^Y</div></div></td>
+<td><div class="k" onClick="sb(26)"><div class="ks">^Z</div></div></td>
+<td><div class="k" onClick="sb(28)"><div class="ks">^_</div></div></td>
+<td><div class="k" onClick="sb(29)"><div class="ks">^]</div></div></td>
+<td><div class="k" onClick="sb(30)"><div class="ks">^^</div></div></td>
+<td><div class="k" onClick="sb(31)"><div class="ks">^_</div></div></td>
 </tr>
 </table>
 </div>
-</div>
 
-<div id="ol3" class="ol">
-<div class="olBg" onClick="so(0)"></div>
-<div class="olGray"></div>
-<div class="olCtrl">
+<div id="ol3" class="olCtrl">
 <table>
 <tr>
-<td><div class="k" onClick="sk(63236)"><div class="ks">F1</div></div></td>
-<td><div class="k" onClick="sk(63237)"><div class="ks">F2</div></div></td>
-<td><div class="k" onClick="sk(63238)"><div class="ks">F3</div></div></td>
-<td><div class="k" onClick="sk(63239)"><div class="ks">F4</div></div></td>
-<td><div class="k" onClick="sk(63240)"><div class="ks">F5</div></div></td>
-<td><div class="k" onClick="sk(63241)"><div class="ks">F6</div></div></td>
+<td><div class="k" onclick="so(1)"><div class="ks">back</div></div></td>
+<td><div class="k" onClick="sb(63236)"><div class="ks">F1</div></div></td>
+<td><div class="k" onClick="sb(63237)"><div class="ks">F2</div></div></td>
+<td><div class="k" onClick="sb(63238)"><div class="ks">F3</div></div></td>
+<td><div class="k" onClick="sb(63239)"><div class="ks">F4</div></div></td>
+<td><div class="k" onClick="sb(63240)"><div class="ks">F5</div></div></td>
+<td><div class="k" onClick="sb(63241)"><div class="ks">F6</div></div></td>
 </tr>
 <tr>
-<td><div class="k" onClick="sk(63242)"><div class="ks">F7</div></div></td>
-<td><div class="k" onClick="sk(63243)"><div class="ks">F8</div></div></td>
-<td><div class="k" onClick="sk(63244)"><div class="ks">F9</div></div></td>
-<td><div class="k" onClick="sk(63245)"><div class="ks">F10</div></div></td>
-<td><div class="k" onClick="sk(63246)"><div class="ks">F11</div></div></td>
-<td><div class="k" onClick="sk(63247)"><div class="ks">F12</div></div></td>
+<td>&nbsp;</td>
+<td><div class="k" onClick="sb(63242)"><div class="ks">F7</div></div></td>
+<td><div class="k" onClick="sb(63243)"><div class="ks">F8</div></div></td>
+<td><div class="k" onClick="sb(63244)"><div class="ks">F9</div></div></td>
+<td><div class="k" onClick="sb(63245)"><div class="ks">F10</div></div></td>
+<td><div class="k" onClick="sb(63246)"><div class="ks">F11</div></div></td>
+<td><div class="k" onClick="sb(63247)"><div class="ks">F12</div></div></td>
 </tr>
 </table>
 </div>
-</div>
-</div>
-
-<div id="ol4" class="ol">
-<div class="olGray"></div>
-<div class="olCtrl">
-<div class="olMsg"></div>
-</div>
+ 
+<div id="ol4" class="olAlert">
 </div>
 
+</div>
 </body>
 </html>

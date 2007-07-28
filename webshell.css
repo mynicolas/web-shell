@@ -1,18 +1,21 @@
 body {
-background:#111 url('background.jpg') no-repeat;
 margin:0;
 padding:0;
+background:#141414;
+}
+
+.container {
+margin:0 auto 0 auto;
+width:480px;
 }
 
 div.term {
-z-index:-1;
-float:left;
+display:block;
 overflow:hidden;
-width:480px;
+background:#111 url('background.jpg');
 margin:0;
 padding:0;
-display:block;
-font: 10px Andale Mono, monospace;
+font:10px Andale Mono, monospace;
 white-space:pre;
 }
 
@@ -42,36 +45,40 @@ div.term span.bc { background-color: #555555; }		/* Cursor */
 div.term span.be { background-color: transparent; }	/* Default bg */
 div.term span.bf { background-color: #ffffff; }		/* Negative bg */
 
-.ol {
-display:none;
-}
-
-.olBg {
-position:absolute;
-z-index:100;
-width:480px;
-height:268px;
-cursor:pointer;
-}
-
-.olGray {
-position:absolute;
-z-index:50;
-width:480px;
-height:268px;
-background:#141414;
-opacity:0.7;
-}
-
 table {
 border-collapse:collapse;
 }
 
+.olShell {
+display:none;
+position:relative;
+cursor:pointer;
+margin:-268px 0 0 0px;
+width:480px;
+height:268px;
+}
+
 .olCtrl {
-position:absolute;
-z-index:200;
-margin-left:42px;
-width:396px;
+display:none;
+position:relative;
+opacity:0.9;
+margin:-263px 0 0 10px;
+width:480px;
+height:268px;
+}
+
+.olAlert {
+display:none;
+position:relative;
+margin:-183px 0 0 110px;
+width:260px;
+height:66px;
+padding:42px 0 0px 0;
+color:#fff;
+text-align:center;
+font:24px sans-serif;
+background:#141414;
+opacity:0.7;
 }
 
 .ctrltextborder {
@@ -106,15 +113,4 @@ cursor:pointer;
 }
 .ks {
 padding:18px 4px 0 0;
-}
-
-.ctrlfunctions {
-margin-top:64px;
-}
-
-.olMsg {
-padding:110px 0 0 0;
-text-align:center;
-font:24px sans-serif;
-color:#bbb;
 }

@@ -1301,7 +1301,7 @@ class SecureHTTPServer(HTTPServer):
 		BaseServer.__init__(self, server_address, HandlerClass)
 		# Init webshell instances
 		self.webshell_files = {}
-		for i in ['css', 'html', 'js', 'png', 'jpg']:
+		for i in ['css', 'html', 'js', 'jpg', 'png']:
 			for j in glob.glob('*.%s' % i):
 				self.webshell_files[j] = file(j).read()
 		self.webshell_mime = mimetypes.types_map.copy()

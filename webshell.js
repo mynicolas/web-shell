@@ -1,5 +1,5 @@
 webshell={};
-webshell.TerminalClass=function(id,width,height) {
+webshell.TerminalClass=function(id,width,height,handler) {
 	var ie=0;
 	if(window.ActiveXObject)
 		ie=1;
@@ -40,7 +40,7 @@ webshell.TerminalClass=function(id,width,height) {
 					sending=0;
 					timeout=window.setTimeout(update,rmax);
 				} else
-					alert("Disconnected.")
+					handler();
 			}
 			r.send(null);
 		}
@@ -160,6 +160,6 @@ webshell.TerminalClass=function(id,width,height) {
 	}
 	init();
 }
-webshell.Terminal=function(id,width,height) {
-	return new this.TerminalClass(id,width,height);
+webshell.Terminal=function(id,width,height,handler) {
+	return new this.TerminalClass(id,width,height,handler);
 }
