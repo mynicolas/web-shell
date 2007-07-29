@@ -3,7 +3,7 @@
 """ WebShell Server """
 """ Released under the GPL 2.0 by Marc S. Ressl """
 
-version = "0.9.2"
+version = "0.9.3"
 
 import array, time, glob, optparse, random, re
 import socket, os, sys, pty, signal, select, gzip
@@ -849,7 +849,6 @@ class Terminal:
 			try:
 				self.vt100_esc[f]()
 			except KeyError:
-#				print 'ESC', f, 'Unknown'
 				pass
 			if self.vt100_parse_state == 'esc':
 				self.vt100_parse_reset()
@@ -860,7 +859,6 @@ class Terminal:
 			try:
 				self.vt100_csi[f](p)
 			except KeyError:
-#				print 'CSI', f, 'Unknown'
 				pass
 			if self.vt100_parse_state == 'csi':
 				self.vt100_parse_reset()
@@ -922,9 +920,6 @@ class Terminal:
 		self.vt100_out = ""
 		return d
 	def write(self, d):
-#		f = open('/tmp/out.txt', 'a')
-#		f.write(d)
-#		f.close()
 		d = self.utf8_decode(d)
 		for c in d:
 			char = ord(c)
@@ -1259,8 +1254,8 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 					if k:
 						multiplex.proc_write(sid, k)
 					time.sleep(0.002)
-					content_type = 'text/html'
-					content_data = multiplex.proc_dump(sid)
+					content_type = 'text/xml'
+					content_data = '<?xml version="1.0" encoding="UTF-8"?>' + multiplex.proc_dump(sid)
 					content_gzip = True
 				else:
 					self.send_error(400, 'Disconnected')

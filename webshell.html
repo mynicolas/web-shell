@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-<title>WebShell 0.9.2</title>
+<title>WebShell 0.9.3</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <meta name="viewport" content="initial-scale=1.0,width=480,height=268" />
 <link rel="stylesheet" type="text/css" href="webshell.css"/>
@@ -81,10 +81,10 @@ function startMsgAnim(msg,delay,up) {
 		msgAnim.timer=null;
 	}
 	document.getElementById('ol4').innerHTML=msg;
-	document.getElementById('ol4').style.opacity=up?'0.0':'1.0';
 	so(4);
 	msgAnim.up=up;
 	msgAnim.start=(new Date).getTime()+delay-60;
+	msgAnimTimer();
 	msgAnim.timer=setInterval('msgAnimTimer();',60);
 }
 function endMsgAnim () {
@@ -99,10 +99,34 @@ function endMsgAnim () {
 </head>
 <body>
 <div class="container">
-<div id="term" class="term"></div>
 
-<div id="ol0" class="olShell" onClick="so(1)">
+<div id="term" class="term">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </div>
+
+<div id="ol0" class="olShell" onClick="so(1)"></div>
 
 <div id="ol1" class="olCtrl">
 <table>
@@ -110,7 +134,8 @@ function endMsgAnim () {
 <td><div class="k" onclick="so(0)"><div class="ks">back</div></div></td>
 <td colspan="4">
 <form name="textform" onsubmit="st();return false;">
-<div class="ctrltextborder"><input type="text" id="ctrltextinput" name="textinput" /></div></form>
+<input type="text" id="ctrltextinput" name="textinput" />
+</form>
 </td>
 <td><div class="k" onClick="sk(8)"><div class="ks">&#8592;</div></div></td>
 <td><div class="k" onClick="sk(13)"><div class="ks">enter</div></div></td>
@@ -200,8 +225,7 @@ function endMsgAnim () {
 </table>
 </div>
  
-<div id="ol4" class="olAlert">
-</div>
+<div id="ol4" class="olAlert"></div>
 
 </div>
 </body>

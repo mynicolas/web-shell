@@ -4,23 +4,22 @@ webshell.TerminalClass=function(id,width,height,handler) {
 	if(window.ActiveXObject)
 		ie=1;
 	var sid=""+Math.round(Math.random()*1000000000);
-	var query="s="+sid+"&w="+width+"&h="+height+"&k=";
-	var buf="";
-	var timeout;
-	var keybuf=[];
-	var sending=0;
-	var rmax=1;
-
+	var qs="s="+sid+"&w="+width+"&h="+height+"&k=";
+	var kb=[];
+	var sendlock=0;
+	var qtimer;
+	var qtime=100;
+	var retry=0;
 	var div=document.getElementById(id);
 
 	function update() {
-		if(sending==0) {
-			sending=1;
+		if(sendlock==0) {
+			sendlock=1;
 			var r=new XMLHttpRequest();
 			var send="";
-			while(keybuf.length>0)
-				send+=keybuf.pop();
-			r.open("GET","u?"+query+send,true);
+			while(kb.length>0)
+				send+=kb.pop();
+			r.open("GET","u?"+qs+send,true);
 			if(ie)
 				r.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
 			r.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
@@ -28,28 +27,37 @@ webshell.TerminalClass=function(id,width,height,handler) {
 				if(r.readyState!=4)
 					return;
 				if(r.status==200) {
-					html=r.responseText;
+					retry=0;
+					html=r.responseText.substring(38);
 					if(html.length>0) {
 						div.innerHTML=html;
-						rmax=100;
+						qtime=100;
 					} else {
-						rmax*=2;
-						if(rmax>2000)
-							rmax=2000;
+						qtime*=2;
+						if(qtime>2000)
+							qtime=2000;
 					}
-					sending=0;
-					timeout=window.setTimeout(update,rmax);
-				} else
+					sendlock=0;
+					qtimer=window.setTimeout(update,qtime);
+				} else if (r.status==400) {
 					handler();
+				} else {
+					retry++;
+					if (retry<1)
+						qtimer=window.setTimeout(update,5000);
+					else
+						handler();
+				}
 			}
 			r.send(null);
 		}
 	}
 	function queue(s) {
-		keybuf.unshift(s);
-		if(sending==0) {
-			window.clearTimeout(timeout);
-			timeout=window.setTimeout(update,1);
+		kb.unshift(s);
+		qtime=100;
+		if(sendlock==0) {
+			window.clearTimeout(qtimer);
+			qtimer=window.setTimeout(update,1);
 		}
 	}
 	function private_sendkey(kc) {
@@ -156,7 +164,7 @@ webshell.TerminalClass=function(id,width,height,handler) {
 		}
 	}
 	function init() {
-		timeout=window.setTimeout(update,100);
+		qtimer=window.setTimeout(update,1);
 	}
 	init();
 }

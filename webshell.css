@@ -2,6 +2,7 @@ body {
 margin:0;
 padding:0;
 background:#141414;
+color:#fff;
 }
 
 .container {
@@ -70,7 +71,7 @@ height:268px;
 .olAlert {
 display:none;
 position:relative;
-margin:-183px 0 0 110px;
+margin:-186px 0 0 110px;
 width:260px;
 height:66px;
 padding:42px 0 0px 0;
@@ -81,19 +82,11 @@ background:#141414;
 opacity:0.7;
 }
 
-.ctrltextborder {
+#ctrltextinput {
 width:256px;
 margin:11px 0 0 0;
-padding:0;
-border-style:solid;
-border-width:1px;
-border-color:#bbb;
-}
-#ctrltextinput {
-width:252px;
-margin:0;
-padding:4px 2px 4px 2px;
-border:0;
+padding:4px 0px 4px 0px;
+border:solid 1px #bbb;
 font:22px sans-serif;
 color:#fff;
 background:#2d2d2d;
