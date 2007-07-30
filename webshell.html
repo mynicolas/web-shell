@@ -9,10 +9,6 @@
 <script type="text/javascript"><!--
 var t;
 window.onload=function() {
-	if(document.images) {
-		i=new Image();
-		i.src="key.png";
-	}
 	t=webshell.Terminal("term",80,24,ondisconnect);
 	document.onkeypress=t.keypress;
 	document.onkeydown=t.keydown; 
@@ -22,7 +18,7 @@ window.onload=function() {
 window.onselectstart=function() {return false;};
 // Set overlay
 function so(value) {
-	for(var i=1;i<5;i++)
+	for(var i=1;i<6;i++)
 		document.getElementById("ol"+i).style.display=(value == i)?'block':'none';
 	var term=document.getElementById("term");
 	if(value == 0) {
@@ -36,21 +32,21 @@ function so(value) {
 		term.onclick=null;
 		term.style.cursor=null;
 	}
-	document.getElementById("ctrltextinput").focus();
+	document.getElementById("t").focus();
 }
 // Send text
 function st() {
-	var textinput=document.getElementById("ctrltextinput").value;
-	document.getElementById("ctrltextinput").value='';
+	var textinput=document.getElementById("t").value;
+	document.getElementById("t").value='';
 	for(var i=0;i<textinput.length;i++)
 		t.sendkey(textinput.charCodeAt(i));
 	if(!textinput.length)
 		t.sendkey(13);
-	document.getElementById("ctrltextinput").focus();
+	document.getElementById("t").focus();
 }
 // Send key
 function sk(value) {
-	var textinput=document.getElementById("ctrltextinput").value;
+	var textinput=document.getElementById("t").value;
 	if(textinput.length)
 		st();
 	t.sendkey(value);
@@ -78,15 +74,15 @@ function msgAnimTimer() {
 	if(!msgAnim.up)
 		alpha=1.0-alpha;
     var sine=Math.sin((Math.PI/2.0)*alpha);
-	document.getElementById('ol4').style.opacity=sine*sine*0.66;
+	document.getElementById('ol5').style.opacity=sine*sine*0.66;
 }
 function startMsgAnim(msg,delay,up) {
 	if(msgAnim.timer!=null) {
 		clearInterval(msgAnim.timer);
 		msgAnim.timer=null;
 	}
-	document.getElementById('ol4').innerHTML=msg;
-	so(4);
+	document.getElementById('ol5').innerHTML=msg;
+	so(5);
 	msgAnim.up=up;
 	msgAnim.start=(new Date).getTime()+delay-60;
 	msgAnimTimer();
@@ -132,103 +128,126 @@ function endMsgAnim () {
 </div>
 
 <div id="ol1" class="olCtrl">
-<table>
-<tr>
-<td><div class="k" onclick="so(0)"><div class="ks">back</div></div></td>
-<td colspan="4">
-<form name="textform" onsubmit="st();return false;">
-<input type="text" id="ctrltextinput" name="textinput" />
+<div class="b" onclick="so(0)">Back</div>
+<form class="f" name="textform" onsubmit="st();return false;">
+<input type="text" id="t" class="t" name="textinput" />
 </form>
-</td>
-<td><div class="k" onClick="sk(8)"><div class="ks">&#8592;</div></div></td>
-<td><div class="k" onClick="sk(13)"><div class="ks">enter</div></div></td>
-</tr>
-<tr>
-<td><div class="k" onClick="so(3)"><div class="ks">F</div></div></td>
-<td><div class="k" onClick="sk(63273)"><div class="ks">home</div></div></td>
-<td><div class="k" onClick="sk(63276)"><div class="ks">&#8598;</div></div></td>
-<td><div class="k" onClick="sk(63232)"><div class="ks">&#8673;</div></div></td>
-<td><div class="k" onClick="sk(63277)"><div class="ks">&#8600;</div></div></td>
-<td><div class="k" onClick="sk(96)"><div class="ks">`</div></div></td>
-<td><div class="k" onClick="sk(27)"><div class="ks">ESC</div></div></td>
-</tr>
-<tr>
-<td><div class="k" onClick="so(2)"><div class="ks">ctrl</div></div></td>
-<td><div class="k" onClick="sk(63275)"><div class="ks">end</div></div></td>
-<td><div class="k" onClick="sk(63234)"><div class="ks">&#8672;</div></div></td>
-<td><div class="k" onClick="sk(63233)"><div class="ks">&#8675;</div></div></td>
-<td><div class="k" onClick="sk(63235)"><div class="ks">&#8674;</div></div></td>
-<td><div class="k" onClick="sk(32)"><div class="ks">space</div></div></td>
-<td><div class="k" onClick="sk(9)"><div class="ks">tab</div></div></td>
-</tr>
-</table>
+<div class="k" onClick="sk(13)">Send</div>
+<div class="k"></div>
+<div class="k" onClick="sk(63232)">&#8673;</div>
+<div class="k"></div>
+<div class="k" onClick="sk(96)">`</div>
+<div class="k" onClick="sk(27)">esc</div>
+<div class="k" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
+<br/>
+<div class="k" onClick="sk(63234)">&#8672;</div>
+<div class="k" onClick="sk(63233)">&#8675;</div>
+<div class="k" onClick="sk(63235)">&#8674;</div>
+<div class="k"></div>
+<div class="k" onClick="sk(9)">tab</div>
+<div class="k" onClick="sk(32)">space</div>
+<br/>
+<div class="k" onClick="so(2)">fn</div>
+<div class="k" onClick="so(3)">ctrl</div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"><!--small>&#9788;</small--></div>
+<div class="k"><!--&#9788;--></div>
 </div>
 
 <div id="ol2" class="olCtrl">
-<table>
-<tr>
-<td><div class="k" onclick="so(1)"><div class="ks">back</div></div></td>
-<td><div class="k" onClick="sb(1)"><div class="ks">^A</div></div></td>
-<td><div class="k" onClick="sb(2)"><div class="ks">^B</div></div></td>
-<td><div class="k" onClick="sb(3)"><div class="ks">^C</div></div></td>
-<td><div class="k" onClick="sb(4)"><div class="ks">^D</div></div></td>
-<td><div class="k" onClick="sb(5)"><div class="ks">^E</div></div></td>
-<td><div class="k" onClick="sb(6)"><div class="ks">^F</div></div></td>
-</tr>
-<tr>
-<td><div class="k" onClick="sb(7)"><div class="ks">^G</div></div></td>
-<td><div class="k" onClick="sb(10)"><div class="ks">^J</div></div></td>
-<td><div class="k" onClick="sb(11)"><div class="ks">^K</div></div></td>
-<td><div class="k" onClick="sb(12)"><div class="ks">^L</div></div></td>
-<td><div class="k" onClick="sb(14)"><div class="ks">^N</div></div></td>
-<td><div class="k" onClick="sb(15)"><div class="ks">^O</div></div></td>
-<td><div class="k" onClick="sb(16)"><div class="ks">^P</div></div></td>
-</tr>
-<tr>
-<td><div class="k" onClick="sb(17)"><div class="ks">^Q</div></div></td>
-<td><div class="k" onClick="sb(18)"><div class="ks">^R</div></div></td>
-<td><div class="k" onClick="sb(19)"><div class="ks">^S</div></div></td>
-<td><div class="k" onClick="sb(20)"><div class="ks">^T</div></div></td>
-<td><div class="k" onClick="sb(21)"><div class="ks">^U</div></div></td>
-<td><div class="k" onClick="sb(22)"><div class="ks">^V</div></div></td>
-<td><div class="k" onClick="sb(23)"><div class="ks">^W</div></div></td>
-</tr>
-<tr>
-<td><div class="k" onClick="sb(24)"><div class="ks">^X</div></div></td>
-<td><div class="k" onClick="sb(25)"><div class="ks">^Y</div></div></td>
-<td><div class="k" onClick="sb(26)"><div class="ks">^Z</div></div></td>
-<td><div class="k" onClick="sb(28)"><div class="ks">^_</div></div></td>
-<td><div class="k" onClick="sb(29)"><div class="ks">^]</div></div></td>
-<td><div class="k" onClick="sb(30)"><div class="ks">^^</div></div></td>
-<td><div class="k" onClick="sb(31)"><div class="ks">^_</div></div></td>
-</tr>
-</table>
+<div class="b" onclick="so(0)">Back</div>
+<div class="k" onClick="sb(63236)">F1</div>
+<div class="k" onClick="sb(63237)">F2</div>
+<div class="k" onClick="sb(63238)">F3</div>
+<div class="k" onClick="sb(63239)">F4</div>
+<div class="k" onClick="sb(63240)">F5</div>
+<div class="k" onClick="sb(63241)">F6</div>
+<div class="k"></div>
+<div class="k" onClick="sk(63276)">pgup</div>
+<div class="k"></div>
+<div class="k" onClick="sb(63242)">F7</div>
+<div class="k" onClick="sb(63243)">F8</div>
+<div class="k" onClick="sb(63243)">F9</div>
+<div class="k" onClick="sk(63273)">home</div>
+<div class="k" onClick="sk(63277)">pgdn</div>
+<div class="k" onClick="sk(63275)">end</div>
+<div class="k" onClick="sb(63245)">F10</div>
+<div class="k" onClick="sb(63246)">F11</div>
+<div class="k" onClick="sb(63247)">F12</div>
+<div class="s" onClick="so(1)">fn</div>
+<div class="k" onClick="so(4)">ctrl</div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
 </div>
 
 <div id="ol3" class="olCtrl">
-<table>
-<tr>
-<td><div class="k" onclick="so(1)"><div class="ks">back</div></div></td>
-<td><div class="k" onClick="sb(63236)"><div class="ks">F1</div></div></td>
-<td><div class="k" onClick="sb(63237)"><div class="ks">F2</div></div></td>
-<td><div class="k" onClick="sb(63238)"><div class="ks">F3</div></div></td>
-<td><div class="k" onClick="sb(63239)"><div class="ks">F4</div></div></td>
-<td><div class="k" onClick="sb(63240)"><div class="ks">F5</div></div></td>
-<td><div class="k" onClick="sb(63241)"><div class="ks">F6</div></div></td>
-</tr>
-<tr>
-<td>&nbsp;</td>
-<td><div class="k" onClick="sb(63242)"><div class="ks">F7</div></div></td>
-<td><div class="k" onClick="sb(63243)"><div class="ks">F8</div></div></td>
-<td><div class="k" onClick="sb(63244)"><div class="ks">F9</div></div></td>
-<td><div class="k" onClick="sb(63245)"><div class="ks">F10</div></div></td>
-<td><div class="k" onClick="sb(63246)"><div class="ks">F11</div></div></td>
-<td><div class="k" onClick="sb(63247)"><div class="ks">F12</div></div></td>
-</tr>
-</table>
+<div class="b" onclick="so(0)">Back</div>
+
+<div class="k" onClick="sb(17)">^Q</div>
+<div class="k" onClick="sb(23)">^W</div>
+<div class="k" onClick="sb(5)">^E</div>
+<div class="k" onClick="sb(18)">^R</div>
+<div class="k" onClick="sb(20)">^T</div>
+<div class="k" onClick="sb(25)">^Y</div>
+
+<div class="k" onClick="sb(1)">^A</div>
+<div class="k" onClick="sb(19)">^S</div>
+<div class="k" onClick="sb(4)">^D</div>
+<div class="k" onClick="sb(6)">^F</div>
+<div class="k" onClick="sb(7)">^G</div>
+<div class="k" onClick="sb(8)">^H</div>
+
+<div class="k" onClick="sb(26)">^Z</div>
+<div class="k" onClick="sb(24)">^X</div>
+<div class="k" onClick="sb(3)">^C</div>
+<div class="k" onClick="sb(22)">^V</div>
+<div class="k" onClick="sb(2)">^B</div>
+<div class="k" onClick="sb(14)">^N</div>
+
+<div class="k" onClick="so(4)">fn</div>
+<div class="s" onClick="so(1)">ctrl</div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+</div>
+
+<div id="ol4" class="olCtrl">
+<div class="b" onclick="so(0)">Back</div>
+
+<div class="k" onClick="sb(21)">^U</div>
+<div class="k" onClick="sb(9)">^I</div>
+<div class="k" onClick="sb(15)">^O</div>
+<div class="k" onClick="sb(16)">^P</div>
+<div class="k" onClick="sb(0)">^@</div>
+<div class="k" onClick="sb(28)">^\</div>
+
+<div class="k" onClick="sb(10)">^J</div>
+<div class="k" onClick="sb(11)">^K</div>
+<div class="k" onClick="sb(12)">^L</div>
+<div class="k" onClick="sb(29)">^]</div>
+<div class="k" onClick="sb(30)">^^</div>
+<div class="k" onClick="sb(31)">^_</div>
+
+<div class="k" onClick="sb(13)">^M</div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+
+<div class="s" onClick="so(3)">fn</div>
+<div class="s" onClick="so(2)">ctrl</div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
 </div>
  
-<div id="ol4" class="olAlert"></div>
+<div id="ol5" class="olAlert"></div>
 
 </div>
 </body>
