@@ -1063,9 +1063,10 @@ class Multiplex:
 			# Update terminal size
 			if self.session[sid]['w'] != w or self.session[sid]['h'] != h:
 				try:
-					fcntl.ioctl(self.session[sid]['fd'],
-						struct.unpack('i', struct.pack('I',
-						termios.TIOCSWINSZ))[0],
+					fcntl.ioctl(fd, 
+						struct.unpack('i', 
+							struct.pack('I', termios.TIOCSWINSZ)
+						)[0],
 						struct.pack("HHHH", h, w, 0, 0))
 				except (IOError, OSError):
 					pass
@@ -1119,11 +1120,13 @@ class Multiplex:
 			fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
 			# Set terminal size
 			try:
-				fcntl.ioctl(self.session[sid]['fd'],
-					struct.unpack('i', struct.pack('I',
-					termios.TIOCSWINSZ))[0],
+				fcntl.ioctl(fd, 
+					struct.unpack('i', 
+						struct.pack('I', termios.TIOCSWINSZ)
+					)[0],
 					struct.pack("HHHH", h, w, 0, 0))
 			except (IOError, OSError):
+				print 'aa'
 				pass
 			self.session[sid]['pid'] = pid
 			self.session[sid]['fd'] = fd
