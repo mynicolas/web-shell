@@ -8,7 +8,7 @@ color:#fff;
 
 .container {
 margin:0 auto 0 auto;
-width:480px;
+width:640px;
 }
 
 div.term {
@@ -51,6 +51,7 @@ div.term span.bf { background-color: #ffffff; }		/* Negative bg */
 display:none;
 position:relative;
 margin:-264px 0 0 0;
+opacity:1.0;
 }
 .olAlert {
 display:none;
@@ -88,7 +89,7 @@ padding:0;
 background:url('text.png') no-repeat;
 }
 .t {
-width:398px;
+width:399px;
 margin:12px 0 0 0;
 padding:4px 0 4px 0;
 background:#000;
@@ -96,6 +97,9 @@ border:0;
 font:22px sans-serif;
 color:#fff;
 opacity:0.5;
+}
+.e {
+height:54px;
 }
 .k {
 float:left;

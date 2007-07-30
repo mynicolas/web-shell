@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-<title>WebShell 0.9.4</title>
+<title>WebShell 0.9.5</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <meta name="viewport" content="initial-scale=1.0,width=480,height=268" />
 <link rel="stylesheet" type="text/css" href="webshell.css"/>
@@ -101,89 +101,35 @@ function endMsgAnim () {
 <body>
 <div class="container">
 
-<div id="term" class="term">
+<div id="term" class="term"></div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
+<!--
+-->
 
 <div id="ol1" class="olCtrl">
 <div class="b" onclick="so(0)">Back</div>
+<div class="e"></div>
 <form class="f" name="textform" onsubmit="st();return false;">
 <input type="text" id="t" class="t" name="textinput" />
 </form>
 <div class="k" onClick="sk(13)">Send</div>
-<div class="k"></div>
-<div class="k" onClick="sk(63232)">&#8673;</div>
+<div class="e"></div>
+<div class="k" onClick="sk(27)">esc</div>
+<div class="k" onClick="sk(9)">tab</div>
 <div class="k"></div>
 <div class="k" onClick="sk(96)">`</div>
-<div class="k" onClick="sk(27)">esc</div>
-<div class="k" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
-<br/>
-<div class="k" onClick="sk(63234)">&#8672;</div>
-<div class="k" onClick="sk(63233)">&#8675;</div>
-<div class="k" onClick="sk(63235)">&#8674;</div>
-<div class="k"></div>
-<div class="k" onClick="sk(9)">tab</div>
 <div class="k" onClick="sk(32)">space</div>
-<br/>
-<div class="k" onClick="so(2)">fn</div>
-<div class="k" onClick="so(3)">ctrl</div>
-<div class="k"></div>
-<div class="k"></div>
+<div class="k" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
+<div class="e"></div>
+<div class="s" onClick="so(1)">text</div>
+<div class="k" onClick="so(2)">ctrl</div>
+<div class="k" onClick="so(3)">nav</div>
+<div class="k" onClick="so(4)">fn</div>
 <div class="k"><!--small>&#9788;</small--></div>
 <div class="k"><!--&#9788;--></div>
 </div>
 
 <div id="ol2" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="k" onClick="sb(63236)">F1</div>
-<div class="k" onClick="sb(63237)">F2</div>
-<div class="k" onClick="sb(63238)">F3</div>
-<div class="k" onClick="sb(63239)">F4</div>
-<div class="k" onClick="sb(63240)">F5</div>
-<div class="k" onClick="sb(63241)">F6</div>
-<div class="k"></div>
-<div class="k" onClick="sk(63276)">pgup</div>
-<div class="k"></div>
-<div class="k" onClick="sb(63242)">F7</div>
-<div class="k" onClick="sb(63243)">F8</div>
-<div class="k" onClick="sb(63243)">F9</div>
-<div class="k" onClick="sk(63273)">home</div>
-<div class="k" onClick="sk(63277)">pgdn</div>
-<div class="k" onClick="sk(63275)">end</div>
-<div class="k" onClick="sb(63245)">F10</div>
-<div class="k" onClick="sb(63246)">F11</div>
-<div class="k" onClick="sb(63247)">F12</div>
-<div class="s" onClick="so(1)">fn</div>
-<div class="k" onClick="so(4)">ctrl</div>
-<div class="k"></div>
-<div class="k"></div>
-<div class="k"></div>
-<div class="k"></div>
-</div>
-
-<div id="ol3" class="olCtrl">
 <div class="b" onclick="so(0)">Back</div>
 
 <div class="k" onClick="sb(17)">^Q</div>
@@ -192,30 +138,31 @@ function endMsgAnim () {
 <div class="k" onClick="sb(18)">^R</div>
 <div class="k" onClick="sb(20)">^T</div>
 <div class="k" onClick="sb(25)">^Y</div>
-
+<div class="e"></div>
 <div class="k" onClick="sb(1)">^A</div>
 <div class="k" onClick="sb(19)">^S</div>
 <div class="k" onClick="sb(4)">^D</div>
 <div class="k" onClick="sb(6)">^F</div>
 <div class="k" onClick="sb(7)">^G</div>
 <div class="k" onClick="sb(8)">^H</div>
-
+<div class="e"></div>
 <div class="k" onClick="sb(26)">^Z</div>
 <div class="k" onClick="sb(24)">^X</div>
 <div class="k" onClick="sb(3)">^C</div>
 <div class="k" onClick="sb(22)">^V</div>
 <div class="k" onClick="sb(2)">^B</div>
 <div class="k" onClick="sb(14)">^N</div>
-
+<div class="e"></div>
+<div class="k" onClick="so(1)">text</div>
+<div class="s" onClick="so(2)">ctrl</div>
+<div class="k" onClick="so(3)">nav</div>
 <div class="k" onClick="so(4)">fn</div>
-<div class="s" onClick="so(1)">ctrl</div>
-<div class="k"></div>
-<div class="k"></div>
 <div class="k"></div>
 <div class="k"></div>
 </div>
 
-<div id="ol4" class="olCtrl">
+<!--
+<div id="ol3" class="olCtrl">
 <div class="b" onclick="so(0)">Back</div>
 
 <div class="k" onClick="sb(21)">^U</div>
@@ -243,6 +190,58 @@ function endMsgAnim () {
 <div class="s" onClick="so(2)">ctrl</div>
 <div class="k"></div>
 <div class="k"></div>
+<div class="k"></div>
+<div class="k"></div>
+</div>
+-->
+
+<div id="ol3" class="olCtrl">
+<div class="b" onclick="so(0)">Back</div>
+<div class="e"></div>
+<div class="k" onClick="sk(63302)">ins</div>
+<div class="k"></div>
+<div class="k" onClick="sk(63273)">home</div>
+<div class="k" onClick="sk(63276)">&#8598;</div>
+<div class="k" onClick="sk(63232)">&#8673;</div>
+<div class="k" onClick="sk(63277)">&#8600;</div>
+<div class="e"></div>
+<div class="k" onClick="sk(63272)">del</div>
+<div class="k"></div>
+<div class="k" onClick="sk(63275)">end</div>
+<div class="k" onClick="sk(63234)">&#8672;</div>
+<div class="k" onClick="sk(63233)">&#8675;</div>
+<div class="k" onClick="sk(63235)">&#8674;</div>
+<div class="e"></div>
+<div class="k" onClick="so(1)">text</div>
+<div class="k" onClick="so(2)">ctrl</div>
+<div class="s" onClick="so(3)">nav</div>
+<div class="k" onClick="so(4)">fn</div>
+<div class="k"></div>
+<div class="k"></div>
+</div>
+
+
+<div id="ol4" class="olCtrl">
+<div class="b" onclick="so(0)">Back</div>
+<div class="e"></div>
+<div class="k" onClick="sb(63236)">F1</div>
+<div class="k" onClick="sb(63237)">F2</div>
+<div class="k" onClick="sb(63238)">F3</div>
+<div class="k" onClick="sb(63239)">F4</div>
+<div class="k" onClick="sb(63240)">F5</div>
+<div class="k" onClick="sb(63241)">F6</div>
+<div class="e"></div>
+<div class="k" onClick="sb(63242)">F7</div>
+<div class="k" onClick="sb(63243)">F8</div>
+<div class="k" onClick="sb(63243)">F9</div>
+<div class="k" onClick="sb(63245)">F10</div>
+<div class="k" onClick="sb(63246)">F11</div>
+<div class="k" onClick="sb(63247)">F12</div>
+<div class="e"></div>
+<div class="k" onClick="so(1)">text</div>
+<div class="k" onClick="so(2)">ctrl</div>
+<div class="k" onClick="so(3)">nav</div>
+<div class="s" onClick="so(4)">fn</div>
 <div class="k"></div>
 <div class="k"></div>
 </div>
