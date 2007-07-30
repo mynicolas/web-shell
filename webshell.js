@@ -23,9 +23,10 @@ webshell.TerminalClass=function(id,width,height,handler) {
 			if(ie)
 				r.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
 			r.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-			r.onreadystatechange = function () {
+			r.onreadystatechange=function() {
 				if(r.readyState!=4)
 					return;
+				sendlock=0;
 				if(r.status==200) {
 					retry=0;
 					html=r.responseText.substring(38);
@@ -37,14 +38,13 @@ webshell.TerminalClass=function(id,width,height,handler) {
 						if(qtime>2000)
 							qtime=2000;
 					}
-					sendlock=0;
 					qtimer=window.setTimeout(update,qtime);
-				} else if (r.status==400) {
+				} else if (r.status==400)
 					handler();
-				} else {
+				else {
 					retry++;
-					if (retry<1)
-						qtimer=window.setTimeout(update,5000);
+					if (retry<3)
+						qtimer=window.setTimeout(update,2000);
 					else
 						handler();
 				}

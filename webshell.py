@@ -3,7 +3,7 @@
 """ WebShell Server """
 """ Released under the GPL 2.0 by Marc S. Ressl """
 
-version = "0.9.3"
+version = "0.9.4"
 
 import array, time, glob, optparse, random, re
 import socket, os, sys, pty, signal, select, gzip
