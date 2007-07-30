@@ -1064,7 +1064,8 @@ class Multiplex:
 			if self.session[sid]['w'] != w or self.session[sid]['h'] != h:
 				try:
 					fcntl.ioctl(self.session[sid]['fd'],
-						termios.TIOCSWINSZ,
+						struct.unpack('i', struct.pack('I',
+						termios.TIOCSWINSZ))[0],
 						struct.pack("HHHH", h, w, 0, 0))
 				except (IOError, OSError):
 					pass
