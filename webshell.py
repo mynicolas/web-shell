@@ -1119,13 +1119,10 @@ class Multiplex:
 			fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
 			# Set terminal size
 			try:
-				fcntl.ioctl(fd, 
-					termios.TIOCSWINSZ,
-					struct.pack("HHHH", 
-						self.session[sid]['h'], self.session[sid]['w'], 
-						0, 0
-					)
-				)
+				fcntl.ioctl(self.session[sid]['fd'],
+					struct.unpack('i', struct.pack('I',
+					termios.TIOCSWINSZ))[0],
+					struct.pack("HHHH", h, w, 0, 0))
 			except (IOError, OSError):
 				pass
 			self.session[sid]['pid'] = pid

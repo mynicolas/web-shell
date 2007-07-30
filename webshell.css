@@ -50,15 +50,6 @@ table {
 border-collapse:collapse;
 }
 
-.olShell {
-display:none;
-position:relative;
-cursor:pointer;
-margin:-268px 0 0 0px;
-width:480px;
-height:268px;
-}
-
 .olCtrl {
 display:none;
 position:relative;

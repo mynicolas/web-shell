@@ -22,14 +22,19 @@ window.onload=function() {
 window.onselectstart=function() {return false;};
 // Set overlay
 function so(value) {
-	for(var i=0;i<5;i++)
+	for(var i=1;i<5;i++)
 		document.getElementById("ol"+i).style.display=(value == i)?'block':'none';
+	var term=document.getElementById("term");
 	if(value == 0) {
 		document.onkeypress=t.keypress;
 		document.onkeydown=t.keydown;
+		term.onclick=function() {so(1);};
+		term.style.cursor="pointer";
 	} else {
 		document.onkeypress=null;
 		document.onkeydown=null;
+		term.onclick=null;
+		term.style.cursor=null;
 	}
 	document.getElementById("ctrltextinput").focus();
 }
@@ -125,8 +130,6 @@ function endMsgAnim () {
 
 
 </div>
-
-<div id="ol0" class="olShell" onClick="so(1)"></div>
 
 <div id="ol1" class="olCtrl">
 <table>
