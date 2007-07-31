@@ -32,7 +32,8 @@ function so(value) {
 		term.onclick=null;
 		term.style.cursor=null;
 	}
-	document.getElementById("t").focus();
+	if (value==1)
+		document.getElementById("t").focus();
 }
 // Send text
 function st() {
@@ -109,24 +110,18 @@ function endMsgAnim () {
 <div id="ol1" class="olCtrl">
 <div class="b" onclick="so(0)">Back</div>
 <div class="e"></div>
+<div class="e"></div>
 <form class="f" name="textform" onsubmit="st();return false;">
 <input type="text" id="t" class="t" name="textinput" />
 </form>
 <div class="k" onClick="sk(13)">Send</div>
 <div class="e"></div>
-<div class="k" onClick="sk(27)">esc</div>
-<div class="k" onClick="sk(9)">tab</div>
-<div class="k"></div>
-<div class="k" onClick="sk(96)">`</div>
-<div class="k" onClick="sk(32)">space</div>
-<div class="k" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
-<div class="e"></div>
 <div class="s" onClick="so(1)">text</div>
-<div class="k" onClick="so(2)">ctrl</div>
 <div class="k" onClick="so(3)">nav</div>
+<div class="k" onClick="so(2)">ABC</div>
+<div class="k" onClick="so(2)">123</div>
+<div class="k" onClick="so(2)">ctrl</div>
 <div class="k" onClick="so(4)">fn</div>
-<div class="k"><!--small>&#9788;</small--></div>
-<div class="k"><!--&#9788;--></div>
 </div>
 
 <div id="ol2" class="olCtrl">
@@ -154,11 +149,11 @@ function endMsgAnim () {
 <div class="k" onClick="sb(14)">^N</div>
 <div class="e"></div>
 <div class="k" onClick="so(1)">text</div>
-<div class="s" onClick="so(2)">ctrl</div>
 <div class="k" onClick="so(3)">nav</div>
+<div class="k" onClick="so(2)">ABC</div>
+<div class="k" onClick="so(2)">123</div>
+<div class="s" onClick="so(2)">ctrl</div>
 <div class="k" onClick="so(4)">fn</div>
-<div class="k"></div>
-<div class="k"></div>
 </div>
 
 <!--
@@ -193,31 +188,35 @@ function endMsgAnim () {
 <div class="k"></div>
 <div class="k"></div>
 </div>
+<div class="k" onClick="sk(63302)">ins</div>
+<div class="k"></div>
+<div class="k" onClick="sk(96)">`</div>
+
 -->
 
 <div id="ol3" class="olCtrl">
 <div class="b" onclick="so(0)">Back</div>
 <div class="e"></div>
-<div class="k" onClick="sk(63302)">ins</div>
-<div class="k"></div>
+<div class="k" onClick="sk(27)">esc</div>
 <div class="k" onClick="sk(63273)">home</div>
-<div class="k" onClick="sk(63276)">&#8598;</div>
+<div class="k" onClick="sk(63276)">pgup</div>
 <div class="k" onClick="sk(63232)">&#8673;</div>
-<div class="k" onClick="sk(63277)">&#8600;</div>
+<div class="k" onClick="sk(63277)">pgdn</div>
+<div class="k" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
 <div class="e"></div>
-<div class="k" onClick="sk(63272)">del</div>
-<div class="k"></div>
+<div class="k" onClick="sk(9)">tab</div>
 <div class="k" onClick="sk(63275)">end</div>
 <div class="k" onClick="sk(63234)">&#8672;</div>
 <div class="k" onClick="sk(63233)">&#8675;</div>
 <div class="k" onClick="sk(63235)">&#8674;</div>
+<div class="k" onClick="sk(32)">space</div>
 <div class="e"></div>
 <div class="k" onClick="so(1)">text</div>
-<div class="k" onClick="so(2)">ctrl</div>
 <div class="s" onClick="so(3)">nav</div>
+<div class="k" onClick="so(2)">ABC</div>
+<div class="k" onClick="so(2)">123</div>
+<div class="k" onClick="so(2)">ctrl</div>
 <div class="k" onClick="so(4)">fn</div>
-<div class="k"></div>
-<div class="k"></div>
 </div>
 
 
@@ -239,11 +238,11 @@ function endMsgAnim () {
 <div class="k" onClick="sb(63247)">F12</div>
 <div class="e"></div>
 <div class="k" onClick="so(1)">text</div>
-<div class="k" onClick="so(2)">ctrl</div>
 <div class="k" onClick="so(3)">nav</div>
+<div class="k" onClick="so(2)">ABC</div>
+<div class="k" onClick="so(2)">123</div>
+<div class="k" onClick="so(2)">ctrl</div>
 <div class="s" onClick="so(4)">fn</div>
-<div class="k"></div>
-<div class="k"></div>
 </div>
  
 <div id="ol5" class="olAlert"></div>

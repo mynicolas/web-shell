@@ -15,7 +15,10 @@ webshell.TerminalClass=function(id,width,height,handler) {
 	function update() {
 		if(sendlock==0) {
 			sendlock=1;
-			var r=new XMLHttpRequest();
+			if (ie==1)
+				var r=new ActiveXObject("Microsoft.XMLHTTP");
+			else
+				var r=new XMLHttpRequest();
 			var send="";
 			while(kb.length>0)
 				send+=kb.pop();
@@ -98,7 +101,7 @@ webshell.TerminalClass=function(id,width,height,handler) {
 		// Translate to standard keycodes
 		if (!ev) var ev=window.event;
 		var kc;
-
+//alert('kc:'+ev.keyCode+' which:'+ev.which+' ctrlKey:'+ev.ctrlKey);
 		if (ev.keyCode) kc=ev.keyCode;
 		if (ev.which) kc=ev.which;
 		if (ev.ctrlKey) {

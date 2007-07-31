@@ -75,3 +75,5 @@ Thanks
 Special thanks to Nicholas Jitkoff (the author of Quicksilver), for
 helping to debug the user interface.
 
+Also, special thanks to Adam Olsen for contributing great user
+interface ideas.
