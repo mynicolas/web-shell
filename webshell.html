@@ -18,7 +18,7 @@ window.onload=function() {
 window.onselectstart=function() {return false;};
 // Set overlay
 function so(value) {
-	for(var i=1;i<8;i++)
+	for(var i=1;i<10;i++)
 		document.getElementById("ol"+i).style.display=(value == i)?'block':'none';
 	var term=document.getElementById("term");
 	if(value == 0) {
@@ -88,7 +88,7 @@ function startMsgAnim(msg,delay,up) {
 		msgAnim.timer=null;
 	}
 	document.getElementById('ol7').innerHTML=msg;
-	so(5);
+	so(7);
 	msgAnim.up=up;
 	msgAnim.start=(new Date).getTime()+delay-60;
 	msgAnimTimer();
@@ -110,208 +110,290 @@ function endMsgAnim () {
 <div id="term" class="term"></div>
 
 <div id="ol1" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="e"></div>
-<div class="e"></div>
+<div class="tb" onclick="so(0)">Back</div>
+<div class="b"></div>
+<div class="b"></div>
 <form class="f" name="textform" onsubmit="st();return false;">
 <input type="text" id="t" class="t" name="textinput" />
 </form>
 <div class="k" onClick="sh(13)">Send</div>
-<div class="e"></div>
-<div class="s" onClick="so(1)">text</div>
+<div class="b"></div>
+<div class="k s" onClick="so(1)">text</div>
 <div class="k" onClick="so(2)">nav</div>
 <div class="k" onClick="so(3)">ABC</div>
-<div class="k" onClick="so(4)">123</div>
+<div class="k" onClick="so(4)">.?123</div>
 <div class="k" onClick="so(5)">ctrl</div>
 <div class="k" onClick="so(6)">fn</div>
 </div>
 
 <div id="ol2" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="e"></div>
+<div class="tb" onclick="so(0)">Back</div>
+<div class="b"></div>
 <div class="k" onClick="sk(27)">esc</div>
 <div class="k" onClick="sk(63273)">home</div>
 <div class="k" onClick="sk(63276)">pgup</div>
 <div class="k" onClick="sk(63232)">&#8673;</div>
 <div class="k" onClick="sk(63277)">pgdn</div>
 <div class="k" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
-<div class="e"></div>
+<div class="b"></div>
 <div class="k" onClick="sk(9)">tab</div>
 <div class="k" onClick="sk(63275)">end</div>
 <div class="k" onClick="sk(63234)">&#8672;</div>
 <div class="k" onClick="sk(63233)">&#8675;</div>
 <div class="k" onClick="sk(63235)">&#8674;</div>
 <div class="k" onClick="sk(32)">space</div>
-<div class="e"></div>
+<div class="b"></div>
 <div class="k" onClick="so(1)">text</div>
-<div class="s" onClick="so(2)">nav</div>
+<div class="k s" onClick="so(2)">nav</div>
 <div class="k" onClick="so(3)">ABC</div>
-<div class="k" onClick="so(4)">123</div>
+<div class="k" onClick="so(4)">.?123</div>
 <div class="k" onClick="so(5)">ctrl</div>
 <div class="k" onClick="so(6)">fn</div>
 </div>
 
 <div id="ol3" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="j" onClick="sb(81)">Q</div>
-<div class="j" onClick="sb(87)">W</div>
-<div class="j" onClick="sb(69)">E</div>
-<div class="j" onClick="sb(82)">R</div>
-<div class="j" onClick="sb(84)">T</div>
-<div class="j" onClick="sb(89)">Y</div>
-<div class="j" onClick="sb(85)">U</div>
-<div class="j" onClick="sb(73)">I</div>
-<div class="j" onClick="sb(79)">O</div>
-<div class="j" onClick="sb(80)">P</div>
-<div class="e"></div>
-<div class="j" onClick="sb(65)">A</div>
-<div class="j" onClick="sb(83)">S</div>
-<div class="j" onClick="sb(68)">D</div>
-<div class="j" onClick="sb(70)">F</div>
-<div class="j" onClick="sb(71)">G</div>
-<div class="j" onClick="sb(72)">H</div>
-<div class="j" onClick="sb(74)">J</div>
-<div class="j" onClick="sb(75)">K</div>
-<div class="j" onClick="sb(76)">L</div>
-<div class="j"></div>
-<div class="e"></div>
-<div class="j">sh</div>
-<div class="j" onClick="sb(90)">Z</div>
-<div class="j" onClick="sb(88)">X</div>
-<div class="j" onClick="sb(67)">C</div>
-<div class="j" onClick="sb(86)">V</div>
-<div class="j" onClick="sb(66)">B</div>
-<div class="j" onClick="sb(78)">N</div>
-<div class="j" onClick="sb(77)">M</div>
-<div class="j">sp</div>
+<div class="tb" onclick="so(0)">Back</div>
+<div class="j" onClick="sk(113)">q</div>
+<div class="j" onClick="sk(119)">w</div>
+<div class="j" onClick="sk(101)">e</div>
+<div class="j" onClick="sk(114)">r</div>
+<div class="j" onClick="sk(116)">t</div>
+<div class="j" onClick="sk(121)">y</div>
+<div class="j" onClick="sk(117)">u</div>
+<div class="j" onClick="sk(105)">i</div>
+<div class="j" onClick="sk(111)">o</div>
+<div class="j" onClick="sk(112)">p</div>
+<div class="b"></div>
+<div class="j" onClick="sk(97)">a</div>
+<div class="j" onClick="sk(115)">s</div>
+<div class="j" onClick="sk(100)">d</div>
+<div class="j" onClick="sk(102)">f</div>
+<div class="j" onClick="sk(103)">g</div>
+<div class="j" onClick="sk(104)">h</div>
+<div class="j" onClick="sk(106)">j</div>
+<div class="j" onClick="sk(107)">k</div>
+<div class="j" onClick="sk(108)">l</div>
+<div class="j" onClick="sk(13)">en</div>
+<div class="b"></div>
+<div class="j" onClick="so(8)">sh</div>
+<div class="j" onClick="sk(122)">z</div>
+<div class="j" onClick="sk(120)">x</div>
+<div class="j" onClick="sk(99)">c</div>
+<div class="j" onClick="sk(118)">v</div>
+<div class="j" onClick="sk(98)">b</div>
+<div class="j" onClick="sk(110)">n</div>
+<div class="j" onClick="sk(109)">m</div>
+<div class="j" onClick="sk(32)">sp</div>
 <div class="j" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
-<div class="e"></div>
+<div class="b"></div>
 <div class="k" onClick="so(1)">text</div>
 <div class="k" onClick="so(2)">nav</div>
-<div class="s" onClick="so(3)">ABC</div>
-<div class="k" onClick="so(4)">123</div>
+<div class="k s" onClick="so(3)">ABC</div>
+<div class="k" onClick="so(4)">.?123</div>
+<div class="k" onClick="so(5)">ctrl</div>
+<div class="k" onClick="so(6)">fn</div>
+</div>
+
+<div id="ol8" class="olCtrl">
+<div class="tb" onclick="so(0)">Back</div>
+<div class="j" onClick="sk(81)">Q</div>
+<div class="j" onClick="sk(87)">W</div>
+<div class="j" onClick="sk(69)">E</div>
+<div class="j" onClick="sk(82)">R</div>
+<div class="j" onClick="sk(84)">T</div>
+<div class="j" onClick="sk(89)">Y</div>
+<div class="j" onClick="sk(85)">U</div>
+<div class="j" onClick="sk(73)">I</div>
+<div class="j" onClick="sk(79)">O</div>
+<div class="j" onClick="sk(80)">P</div>
+<div class="b"></div>
+<div class="j" onClick="sk(65)">A</div>
+<div class="j" onClick="sk(83)">S</div>
+<div class="j" onClick="sk(68)">D</div>
+<div class="j" onClick="sk(70)">F</div>
+<div class="j" onClick="sk(71)">G</div>
+<div class="j" onClick="sk(72)">H</div>
+<div class="j" onClick="sk(74)">J</div>
+<div class="j" onClick="sk(75)">K</div>
+<div class="j" onClick="sk(76)">L</div>
+<div class="j" onClick="sk(13)">en</div>
+<div class="b"></div>
+<div class="j s" onClick="so(3)">sh</div>
+<div class="j" onClick="sk(90)">Z</div>
+<div class="j" onClick="sk(88)">X</div>
+<div class="j" onClick="sk(67)">C</div>
+<div class="j" onClick="sk(86)">V</div>
+<div class="j" onClick="sk(66)">B</div>
+<div class="j" onClick="sk(78)">N</div>
+<div class="j" onClick="sk(77)">M</div>
+<div class="j" onClick="sk(32)">sp</div>
+<div class="j" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
+<div class="b"></div>
+<div class="k" onClick="so(1)">text</div>
+<div class="k" onClick="so(2)">nav</div>
+<div class="k s" onClick="so(3)">ABC</div>
+<div class="k" onClick="so(4)">.?123</div>
 <div class="k" onClick="so(5)">ctrl</div>
 <div class="k" onClick="so(6)">fn</div>
 </div>
 
 <div id="ol4" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="j" onClick="sb(17)">1</div>
-<div class="j" onClick="sb(23)">2</div>
-<div class="j" onClick="sb(5)">3</div>
-<div class="j" onClick="sb(18)">4</div>
-<div class="j" onClick="sb(20)">5</div>
-<div class="j" onClick="sb(25)">6</div>
-<div class="j" onClick="sb(21)">7</div>
-<div class="j" onClick="sb(9)">8</div>
-<div class="j" onClick="sb(15)">9</div>
-<div class="j" onClick="sb(16)">0</div>
-<div class="e"></div>
-<div class="j" onClick="sb(1)">!</div>
-<div class="j" onClick="sb(19)">"</div>
-<div class="j" onClick="sb(4)">#</div>
-<div class="j" onClick="sb(6)">$</div>
-<div class="j" onClick="sb(7)">%</div>
-<div class="j" onClick="sb(8)">&amp;</div>
-<div class="j" onClick="sb(10)">/</div>
-<div class="j" onClick="sb(11)">(</div>
-<div class="j" onClick="sb(12)">)</div>
-<div class="j">=</div>
-<div class="e"></div>
-<div class="j">sh</div>
-<div class="j" onClick="sb(26)">^Z</div>
-<div class="j" onClick="sb(24)">^X</div>
-<div class="j" onClick="sb(3)">^C</div>
-<div class="j" onClick="sb(22)">^V</div>
-<div class="j" onClick="sb(2)">^B</div>
-<div class="j" onClick="sb(14)">^N</div>
-<div class="j" onClick="sb(13)">^M</div>
-<div class="j">sh</div>
+<div class="tb" onclick="so(0)">Back</div>
+<div class="j" onClick="sk(49)">1</div>
+<div class="j" onClick="sk(50)">2</div>
+<div class="j" onClick="sk(51)">3</div>
+<div class="j" onClick="sk(52)">4</div>
+<div class="j" onClick="sk(53)">5</div>
+<div class="j" onClick="sk(54)">6</div>
+<div class="j" onClick="sk(55)">7</div>
+<div class="j" onClick="sk(56)">8</div>
+<div class="j" onClick="sk(57)">9</div>
+<div class="j" onClick="sk(48)">0</div>
+<div class="b"></div>
+<div class="j" onClick="sk(45)">-</div>
+<div class="j" onClick="sk(47)">/</div>
+<div class="j" onClick="sk(58)">:</div>
+<div class="j" onClick="sk(59)">;</div>
+<div class="j" onClick="sk(40)">(</div>
+<div class="j" onClick="sk(41)">)</div>
+<div class="j" onClick="sk(36)">$</div>
+<div class="j" onClick="sk(38)">&amp;</div>
+<div class="j" onClick="sk(64)">@</div>
+<div class="j" onClick="sk(13)">en</div>
+<div class="b"></div>
+<div class="j" onClick="so(9)">#+=</div>
+<div class="j"></div>
+<div class="j" onClick="sk(46)">.</div>
+<div class="j" onClick="sk(44)">,</div>
+<div class="j" onClick="sk(63)">?</div>
+<div class="j" onClick="sk(33)">!</div>
+<div class="j" onClick="sk(39)">'</div>
+<div class="j" onClick="sk(34)">"</div>
+<div class="j" onClick="sk(32)">sp</div>
 <div class="j" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
-<div class="e"></div>
+<div class="b"></div>
 <div class="k" onClick="so(1)">text</div>
 <div class="k" onClick="so(2)">nav</div>
 <div class="k" onClick="so(3)">ABC</div>
-<div class="s" onClick="so(4)">123</div>
+<div class="k s" onClick="so(4)">.?123</div>
+<div class="k" onClick="so(5)">ctrl</div>
+<div class="k" onClick="so(6)">fn</div>
+</div>
+
+<div id="ol9" class="olCtrl">
+<div class="tb" onclick="so(0)">Back</div>
+<div class="j" onClick="sk(91)">[</div>
+<div class="j" onClick="sk(93)">]</div>
+<div class="j" onClick="sk(123)">{</div>
+<div class="j" onClick="sk(125)">}</div>
+<div class="j" onClick="sk(35)">#</div>
+<div class="j" onClick="sk(37)">%</div>
+<div class="j" onClick="sk(94)">^</div>
+<div class="j" onClick="sk(42)">*</div>
+<div class="j" onClick="sk(43)">+</div>
+<div class="j" onClick="sk(61)">=</div>
+<div class="b"></div>
+<div class="j" onClick="sk(45)">_</div>
+<div class="j" onClick="sk(92)">\</div>
+<div class="j" onClick="sk(124)">|</div>
+<div class="j" onClick="sk(126)">~</div>
+<div class="j" onClick="sk(60)">&lt;</div>
+<div class="j" onClick="sk(62)">&gt;</div>
+<div class="j" onClick="sk(96)">`</div>
+<div class="j"></div>
+<div class="j"></div>
+<div class="j" onClick="sk(13)">en</div>
+<div class="b"></div>
+<div class="j s" onClick="so(4)">123</div>
+<div class="j"></div>
+<div class="j" onClick="sk(46)">.</div>
+<div class="j" onClick="sk(44)">,</div>
+<div class="j" onClick="sk(63)">?</div>
+<div class="j" onClick="sk(33)">!</div>
+<div class="j" onClick="sk(27)">'</div>
+<div class="j"></div>
+<div class="j" onClick="sk(32)">sp</div>
+<div class="j" onClick="sk(8)"><img src="delete.png" alt="bs"></div>
+<div class="b"></div>
+<div class="k" onClick="so(1)">text</div>
+<div class="k" onClick="so(2)">nav</div>
+<div class="k" onClick="so(3)">ABC</div>
+<div class="k s" onClick="so(4)">.?123</div>
 <div class="k" onClick="so(5)">ctrl</div>
 <div class="k" onClick="so(6)">fn</div>
 </div>
 
 <div id="ol5" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="j" onClick="sb(17)">^Q</div>
-<div class="j" onClick="sb(23)">^W</div>
-<div class="j" onClick="sb(5)">^E</div>
-<div class="j" onClick="sb(18)">^R</div>
-<div class="j" onClick="sb(20)">^T</div>
-<div class="j" onClick="sb(25)">^Y</div>
-<div class="j" onClick="sb(21)">^U</div>
-<div class="j" onClick="sb(9)">^I</div>
-<div class="j" onClick="sb(15)">^O</div>
-<div class="j" onClick="sb(16)">^P</div>
-<div class="e"></div>
-<div class="j" onClick="sb(1)">^A</div>
-<div class="j" onClick="sb(19)">^S</div>
-<div class="j" onClick="sb(4)">^D</div>
-<div class="j" onClick="sb(6)">^F</div>
-<div class="j" onClick="sb(7)">^G</div>
-<div class="j" onClick="sb(8)">^H</div>
-<div class="j" onClick="sb(10)">^J</div>
-<div class="j" onClick="sb(11)">^K</div>
-<div class="j" onClick="sb(12)">^L</div>
-<div class="j"></div>
-<div class="e"></div>
-<div class="j"></div>
-<div class="j" onClick="sb(26)">^Z</div>
-<div class="j" onClick="sb(24)">^X</div>
-<div class="j" onClick="sb(3)">^C</div>
-<div class="j" onClick="sb(22)">^V</div>
-<div class="j" onClick="sb(2)">^B</div>
-<div class="j" onClick="sb(14)">^N</div>
-<div class="j" onClick="sb(13)">^M</div>
-<div class="j"></div>
-<div class="j"></div>
-<div class="e"></div>
+<div class="tb" onclick="so(0)">Back</div>
+<div class="j" onClick="sb(17)">^q</div>
+<div class="j" onClick="sb(23)">^w</div>
+<div class="j" onClick="sb(5)">^e</div>
+<div class="j" onClick="sb(18)">^r</div>
+<div class="j" onClick="sb(20)">^t</div>
+<div class="j" onClick="sb(25)">^y</div>
+<div class="j" onClick="sb(21)">^u</div>
+<div class="j" onClick="sb(9)">^i</div>
+<div class="j" onClick="sb(15)">^o</div>
+<div class="j" onClick="sb(16)">^p</div>
+<div class="b"></div>
+<div class="j" onClick="sb(1)">^a</div>
+<div class="j" onClick="sb(19)">^s</div>
+<div class="j" onClick="sb(4)">^d</div>
+<div class="j" onClick="sb(6)">^f</div>
+<div class="j" onClick="sb(7)">^g</div>
+<div class="j" onClick="sb(8)">^h</div>
+<div class="j" onClick="sb(10)">^j</div>
+<div class="j" onClick="sb(11)">^k</div>
+<div class="j" onClick="sb(12)">^l</div>
+<div class="j" onClick="sb(29)">^]</div>
+<div class="b"></div>
+<div class="j" onClick="sb(28)">^\</div>
+<div class="j" onClick="sb(26)">^z</div>
+<div class="j" onClick="sb(24)">^x</div>
+<div class="j" onClick="sb(3)">^c</div>
+<div class="j" onClick="sb(22)">^v</div>
+<div class="j" onClick="sb(2)">^b</div>
+<div class="j" onClick="sb(14)">^n</div>
+<div class="j" onClick="sb(13)">^m</div>
+<div class="j" onClick="sb(30)">^^</div>
+<div class="j" onClick="sb(31)">^_</div>
+<div class="b"></div>
 <div class="k" onClick="so(1)">text</div>
 <div class="k" onClick="so(2)">nav</div>
 <div class="k" onClick="so(3)">ABC</div>
-<div class="k" onClick="so(4)">123</div>
-<div class="s" onClick="so(5)">ctrl</div>
+<div class="k" onClick="so(4)">.?123</div>
+<div class="k s" onClick="so(5)">ctrl</div>
 <div class="k" onClick="so(6)">fn</div>
 </div>
 
 <!--
 <div class="k" onClick="sb(0)">^@</div>
-<div class="k" onClick="sb(28)">^\</div>
-<div class="k" onClick="sb(29)">^]</div>
-<div class="k" onClick="sb(30)">^^</div>
-<div class="k" onClick="sb(31)">^_</div>
 <div class="k" onClick="sk(63302)">ins</div>
 <div class="k" onClick="sk(96)">`</div>
 -->
 <div id="ol6" class="olCtrl">
-<div class="b" onclick="so(0)">Back</div>
-<div class="e"></div>
+<div class="tb" onclick="so(0)">Back</div>
+<div class="b"></div>
 <div class="k" onClick="sb(63236)">F1</div>
 <div class="k" onClick="sb(63237)">F2</div>
 <div class="k" onClick="sb(63238)">F3</div>
 <div class="k" onClick="sb(63239)">F4</div>
 <div class="k" onClick="sb(63240)">F5</div>
 <div class="k" onClick="sb(63241)">F6</div>
-<div class="e"></div>
+<div class="b"></div>
 <div class="k" onClick="sb(63242)">F7</div>
 <div class="k" onClick="sb(63243)">F8</div>
 <div class="k" onClick="sb(63243)">F9</div>
 <div class="k" onClick="sb(63245)">F10</div>
 <div class="k" onClick="sb(63246)">F11</div>
 <div class="k" onClick="sb(63247)">F12</div>
-<div class="e"></div>
+<div class="b"></div>
 <div class="k" onClick="so(1)">text</div>
 <div class="k" onClick="so(2)">nav</div>
 <div class="k" onClick="so(3)">ABC</div>
-<div class="k" onClick="so(4)">123</div>
+<div class="k" onClick="so(4)">.?123</div>
 <div class="k" onClick="so(5)">ctrl</div>
-<div class="s" onClick="so(6)">fn</div>
+<div class="k s" onClick="so(6)">fn</div>
 </div>
  
 <div id="ol7" class="olAlert"></div>

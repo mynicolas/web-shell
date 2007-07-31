@@ -67,7 +67,7 @@ background:#141414;
 opacity:0.7;
 }
 
-.b {
+.tb {
 width:60px;
 height:30px;
 margin:10px 10px 0 10px;
@@ -98,7 +98,7 @@ font:22px sans-serif;
 color:#fff;
 opacity:0.5;
 }
-.e {
+.b {
 height:54px;
 }
 .k {
@@ -126,14 +126,5 @@ color:#fff;
 text-align:center;
 }
 .s {
-float:left;
-width:80px;
-height:38px;
-margin:0;
-padding:16px 0 0 0;
 background:url('cells.png') no-repeat top right;
-cursor:pointer;
-font:22px sans-serif;
-color:#fff;
-text-align:center;
 }
