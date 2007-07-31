@@ -51,7 +51,7 @@ div.term span.bf { background-color: #ffffff; }		/* Negative bg */
 display:none;
 position:relative;
 margin:-264px 0 0 0;
-opacity:1.0;
+opacity:0.9;
 }
 .olAlert {
 display:none;
@@ -86,7 +86,7 @@ width:400px;
 height:54px;
 margin:0;
 padding:0;
-background:url('text.png') no-repeat;
+background:url('cell.png') no-repeat top right;
 }
 .t {
 width:399px;
@@ -107,7 +107,19 @@ width:80px;
 height:38px;
 margin:0;
 padding:16px 0 0 0;
-background:url('key.png') no-repeat;
+background:url('cell.png') no-repeat top right;
+cursor:pointer;
+font:22px sans-serif;
+color:#fff;
+text-align:center;
+}
+.j {
+float:left;
+width:48px;
+height:38px;
+margin:0;
+padding:16px 0 0 0;
+background:url('cell.png') no-repeat top right;
 cursor:pointer;
 font:22px sans-serif;
 color:#fff;
@@ -119,7 +131,7 @@ width:80px;
 height:38px;
 margin:0;
 padding:16px 0 0 0;
-background:url('key2.png') no-repeat;
+background:url('cells.png') no-repeat top right;
 cursor:pointer;
 font:22px sans-serif;
 color:#fff;
