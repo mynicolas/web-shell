@@ -79,4 +79,4 @@ Also, special thanks to Adam Olsen for contributing great user
 interface ideas.
 
 More thanks go to: Brad Choate (suggestions), mountainboy (for
-fixing HMTL stuff), hzink (for user interface suggestions).
+fixing HMTL stuff), hzink (UI ideas).

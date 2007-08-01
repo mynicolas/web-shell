@@ -1303,15 +1303,20 @@ class SecureHTTPServer(HTTPServer):
 		if ssl_enabled:
 			try:
 				ctx = SSL.Context(SSL.SSLv23_METHOD)
+#				ctx.set_options(SSL.OP_NO_SSLv2)
 				ctx.use_privatekey_file(ssl_cert)
 				ctx.use_certificate_chain_file(ssl_cert)
+				# Demand a certificate
+#				ctx.set_verify(SSL.VERIFY_PEER|SSL.VERIFY_FAIL_IF_NO_PEER_CERT,
+#					verify_cb)
+#				ctx.load_verify_locations(os.path.join(dir, 'CA.cert'))
 			except SSL.Error:
 				self.socket = None
 				return
 		# Setup webshell multiplex
 		self.webshell_files = {}
-		for i in ['css', 'html', 'js', 'jpg', 'png']:
-			for j in glob.glob('*.%s' % i):
+		for i in ['css', 'html', 'js', 'gif', 'jpg', 'png']:
+			for j in glob.glob('www/*.%s' % i):
 				self.webshell_files[j] = file(j).read()
 		self.webshell_mime = mimetypes.types_map.copy()
 		self.webshell_multiplex = Multiplex(cmd, env_term)
