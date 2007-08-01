@@ -114,6 +114,7 @@ class Terminal:
 			'!p':	self.csi_DECSTR,
 		}
 		self.vt100_keyfilter_ansikeys = {
+			'~':'~',
 			'A':'\x1b[A',
 			'B':'\x1b[B',
 			'C':'\x1b[C',
@@ -138,6 +139,7 @@ class Terminal:
 			'l':'\x1b[24~',
 		}
 		self.vt100_keyfilter_appkeys = {
+			'~':'~',
 			'A':'\x1bOA',
 			'B':'\x1bOB',
 			'C':'\x1bOC',
@@ -945,7 +947,7 @@ class Terminal:
 					pass
 			elif c == '~':
 				self.vt100_keyfilter_escape = True
-			elif char == 8:
+			elif char == 127:
 				if self.vt100_mode_backspace:
 					o += chr(8)
 				else:
@@ -1268,12 +1270,15 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 			files = self.server.webshell_files
 			mime = self.server.webshell_mime
 			f = os.path.basename(path[0])
+			if f=='favicon.ico':
+				self.send_error(404, 'Not found')
+				return
 			if f not in files:
 				f = 'webshell.html'
 			content_type = mime.get(
 				os.path.splitext(f)[1].lower(), 'application/octet-stream')
 			content_data = files[f]
-			content_gzip = False
+			content_gzip = True
 
 		self.send_response(200)
 		self.send_header('Content-Type', content_type)

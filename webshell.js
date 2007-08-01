@@ -1,20 +1,21 @@
 webshell={};
-webshell.TerminalClass=function(id,width,height,handler) {
+webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
 	var ie=0;
 	if(window.ActiveXObject)
 		ie=1;
 	var sid=""+Math.round(Math.random()*1000000000);
 	var qs="s="+sid+"&w="+width+"&h="+height+"&k=";
 	var kb=[];
-	var sendlock=0;
+	var isactive=false;
+	var islocked=false;
 	var qtimer;
 	var qtime=100;
 	var retry=0;
 	var div=document.getElementById(id);
 
 	function update() {
-		if(sendlock==0) {
-			sendlock=1;
+		if(!islocked) {
+			islocked=true;
 			if (ie==1)
 				var r=new ActiveXObject("Microsoft.XMLHTTP");
 			else
@@ -29,7 +30,11 @@ webshell.TerminalClass=function(id,width,height,handler) {
 			r.onreadystatechange=function() {
 				if(r.readyState!=4)
 					return;
-				sendlock=0;
+				islocked=false;
+				if (!isactive) {
+					isactive=true;
+					onconnect();
+				}
 				if(r.status==200) {
 					retry=0;
 					html=r.responseText.substring(38);
@@ -43,7 +48,7 @@ webshell.TerminalClass=function(id,width,height,handler) {
 					}
 					qtimer=window.setTimeout(update,qtime);
 				} else if (r.status==400)
-					handler();
+					ondisconnect();
 				else {
 					retry++;
 					if (retry<3)
@@ -58,7 +63,7 @@ webshell.TerminalClass=function(id,width,height,handler) {
 	function queue(s) {
 		kb.unshift(s);
 		qtime=100;
-		if(sendlock==0) {
+		if(!islocked) {
 			window.clearTimeout(qtimer);
 			qtimer=window.setTimeout(update,1);
 		}
@@ -147,6 +152,7 @@ webshell.TerminalClass=function(id,width,height,handler) {
 			default: return true;
 			}
 		}
+		if(kc==8) kc=127;
 		private_sendkey(kc);
 		
 		ev.cancelBubble=true;
@@ -166,11 +172,8 @@ webshell.TerminalClass=function(id,width,height,handler) {
 			}
 		}
 	}
-	function init() {
-		qtimer=window.setTimeout(update,1);
-	}
-	init();
+	qtimer=window.setTimeout(update,1);
 }
-webshell.Terminal=function(id,width,height,handler) {
-	return new this.TerminalClass(id,width,height,handler);
+webshell.Terminal=function(id,width,height,onconnect,ondisconnect) {
+	return new this.TerminalClass(id,width,height,onconnect,ondisconnect);
 }
