@@ -1011,7 +1011,7 @@ class Terminal:
 			return ''
 		else:
 			self.dump_cache = dump
-			return dump
+			return '<pre class="term">' + dump + '</pre>'
 
 class SynchronizedMethod:
 	def __init__(self, lock, orig):
@@ -1243,8 +1243,9 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 		self.rfile = socket._fileobject(self.request, "rb", self.rbufsize)
 		self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
 	def do_GET(self):
-		path = self.path.split('?', 1)
-		if path[0] == '/u':
+		path = os.path.basename(self.path)
+		path = path.split('?', 1)
+		if path[0] == 'u':
 			try:
 				p = cgi.parse_qs(path[1], True)
 				sid = int(p['s'][0])
@@ -1268,12 +1269,13 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 		else:
 			files = self.server.webshell_files
 			mime = self.server.webshell_mime
-			f = os.path.basename(path[0])
-			if f=='favicon.ico':
-				self.send_error(404, 'Not found')
-				return
+			f = path[0]
 			if f not in files:
-				f = 'webshell.html'
+				if len(f) == 0:
+					f = 'webshell.html'
+				else:
+					self.send_error(404, 'Not found')
+					return
 			content_type = mime.get(
 				os.path.splitext(f)[1].lower(), 'application/octet-stream')
 			content_data = files[f]
@@ -1317,7 +1319,7 @@ class SecureHTTPServer(HTTPServer):
 		self.webshell_files = {}
 		for i in ['css', 'html', 'js', 'gif', 'jpg', 'png']:
 			for j in glob.glob('www/*.%s' % i):
-				self.webshell_files[j] = file(j).read()
+				self.webshell_files[os.path.basename(j)] = file(j).read()
 		self.webshell_mime = mimetypes.types_map.copy()
 		self.webshell_multiplex = Multiplex(cmd, env_term)
 		# Open socket
@@ -1398,7 +1400,7 @@ def main():
 		server_address = (o.interface, o.port)
 		httpd = SecureHTTPServer(server_address, WebShellRequestHandler, o.cmd, o.term, o.ssl_enabled, o.ssl_cert)
 		if httpd.socket is None:
-			print 'There is a problem with OpenSSL. Make sure the certificate\'s path is correct.'
+			print 'There is a problem with OpenSSL. Make sure the certificates\' path and content are correct.'
 			sys.exit(0)
 		sa = httpd.socket.getsockname()
 		if not o.daemon:
