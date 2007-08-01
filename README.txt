@@ -75,8 +75,6 @@ Thanks
 Special thanks to Nicholas Jitkoff (the author of Quicksilver), for
 helping to debug the user interface.
 
-Also, special thanks to Adam Olsen for contributing great user
-interface ideas.
-
-More thanks go to: Brad Choate (suggestions), mountainboy (for
-fixing HMTL stuff), hzink (UI ideas).
+Also, special thanks go to Brad Choate (UI ideas, HTML fixes),
+Adam Olsen (UI contributions), mountainboy (for fixing HMTL stuff),
+hzink (UI ideas).
