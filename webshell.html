@@ -65,7 +65,7 @@ function onconnect() {
 	startMsgAnim('Tap for keyboard',800,false);
 }
 function ondisconnect() {
-	startMsgAnim('Disconnected',0,true)
+	startMsgAnim('Disconnected',0,true);
 }
 // Animate box
 var msgAnim={timer:null,up:false,duration:300,start:null};
@@ -84,7 +84,7 @@ function msgAnimTimer() {
     var sine=Math.sin((Math.PI/2.0)*alpha);
 	document.getElementById('ol0').style.opacity=sine*sine*0.66;
 }
-function startMsgAnim(msg,delay,duration,up) {
+function startMsgAnim(msg,delay,up) {
 	if(msgAnim.timer!=null) {
 		clearInterval(msgAnim.timer);
 		msgAnim.timer=null;

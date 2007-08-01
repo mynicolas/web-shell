@@ -54,7 +54,7 @@ webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
 					if (retry<3)
 						qtimer=window.setTimeout(update,2000);
 					else
-						handler();
+						ondisconnect();
 				}
 			}
 			r.send(null);

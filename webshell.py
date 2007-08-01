@@ -1299,18 +1299,23 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 class SecureHTTPServer(HTTPServer):
 	def __init__(self, server_address, HandlerClass, cmd=None, env_term=None, ssl_enabled=True, ssl_cert=None):
 		BaseServer.__init__(self, server_address, HandlerClass)
-		# Init webshell instances
+		# Setup SSL
+		if ssl_enabled:
+			try:
+				ctx = SSL.Context(SSL.SSLv23_METHOD)
+				ctx.use_privatekey_file(ssl_cert)
+				ctx.use_certificate_chain_file(ssl_cert)
+			except SSL.Error:
+				self.socket = None
+				return
+		# Setup webshell multiplex
 		self.webshell_files = {}
 		for i in ['css', 'html', 'js', 'jpg', 'png']:
 			for j in glob.glob('*.%s' % i):
 				self.webshell_files[j] = file(j).read()
 		self.webshell_mime = mimetypes.types_map.copy()
 		self.webshell_multiplex = Multiplex(cmd, env_term)
-		# Init http(s) server
-		if ssl_enabled:
-			ctx = SSL.Context(SSL.SSLv23_METHOD)
-			ctx.use_privatekey_file(ssl_cert)
-			ctx.use_certificate_chain_file(ssl_cert)
+		# Open socket
 		self.socket = socket.socket(self.address_family, self.socket_type)
 		if ssl_enabled:
 			self.socket = SSL.Connection(ctx, self.socket)
@@ -1387,6 +1392,9 @@ def main():
 	try:
 		server_address = (o.interface, o.port)
 		httpd = SecureHTTPServer(server_address, WebShellRequestHandler, o.cmd, o.term, o.ssl_enabled, o.ssl_cert)
+		if httpd.socket is None:
+			print 'There is a problem with OpenSSL. Make sure the certificate\'s path is correct.'
+			sys.exit(0)
 		sa = httpd.socket.getsockname()
 		if not o.daemon:
 			scheme = 'http'
