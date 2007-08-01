@@ -1038,7 +1038,7 @@ class Multiplex:
 		self.env_term = env_term
 		# Synchronize methods
 		self.lock = threading.RLock()
-		for name in ['stop', 'proc_keepalive', 'proc_spawn', 'proc_kill',
+		for name in ['proc_keepalive', 'proc_spawn', 'proc_kill',
 			'proc_read', 'proc_write', 'proc_dump']:
 			orig = getattr(self, name)
 			setattr(self, name, SynchronizedMethod(self.lock, orig))
@@ -1128,7 +1128,6 @@ class Multiplex:
 					)[0],
 					struct.pack("HHHH", h, w, 0, 0))
 			except (IOError, OSError):
-				print 'aa'
 				pass
 			self.session[sid]['pid'] = pid
 			self.session[sid]['fd'] = fd
@@ -1317,7 +1316,8 @@ class SecureHTTPServer(HTTPServer):
 			self.socket = SSL.Connection(ctx, self.socket)
 		self.server_bind()
 		self.server_activate()
-	def stop_multiplex(self):
+	def stop(self):
+		self.socket.close()
 		self.webshell_multiplex.stop()
 
 def main():
@@ -1395,7 +1395,7 @@ def main():
 			print 'WebShell (%s) at %s, port %s' % (scheme, sa[0], sa[1])
 		httpd.serve_forever()
 	except KeyboardInterrupt:
-		httpd.stop_multiplex()
+		httpd.stop()
 		print 'Stopped'
 
 if __name__ == '__main__':
