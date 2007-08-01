@@ -78,4 +78,5 @@ helping to debug the user interface.
 Also, special thanks to Adam Olsen for contributing great user
 interface ideas.
 
-Thanks to mountainboy for fixing HMTL stuff.
+More thanks go to: Brad Choate (suggestions), mountainboy (for
+fixing HMTL stuff), hzink (for user interface suggestions).
