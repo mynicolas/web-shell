@@ -1311,7 +1311,7 @@ class SecureHTTPServer(HTTPServer):
 		if ssl_enabled:
 			ctx = SSL.Context(SSL.SSLv23_METHOD)
 			ctx.use_privatekey_file(ssl_cert)
-			ctx.use_certificate_file(ssl_cert)
+			ctx.use_certificate_chain_file(ssl_cert)
 		self.socket = socket.socket(self.address_family, self.socket_type)
 		if ssl_enabled:
 			self.socket = SSL.Connection(ctx, self.socket)
