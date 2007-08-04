@@ -3,7 +3,6 @@ margin:0;
 padding:0;
 background:#141414;
 color:#fff;
---webkit-user-select:ignore;
 }
 
 .container {
@@ -57,7 +56,6 @@ pre.term span.bf { background-color: #ffffff; }		/* Negative bg */
 display:none;
 position:relative;
 margin:-264px 0 0 0;
-opacity:0.8;
 }
 .olAlert {
 display:none;
@@ -73,27 +71,72 @@ background:#141414;
 opacity:0.7;
 }
 
-.tb {
+.h {
+float:left;
 width:60px;
 height:30px;
-margin:10px 10px 0 10px;
-padding:8px 0 0 3px;
-background:url('back.png') no-repeat;
+margin:10px 0 0 0;
+padding:8px 0 0 0;
 font:12px sans-serif;
 text-align:center;
 color:#fff;
-text-align:center;
 cursor:pointer;
 }
+.hb {
+background:url('back.png') no-repeat;
+padding:8px 0 0 3px;
+}
+.h1 {
+background:url('head.png') no-repeat 0px 0px;
+}
+.h2 {
+background:url('head.png') no-repeat -60px 0px;
+}
+.h3 {
+background:url('head.png') no-repeat -120px 0px;
+}
+.h1s {
+background:url('heads.png') no-repeat 0px 0px;
+}
+.h2s {
+background:url('heads.png') no-repeat -60px 0px;
+}
+.h3s {
+background:url('heads.png') no-repeat -120px 0px;
+}
 
-.f {
-float:left;
-width:400px;
+.s {
 height:54px;
+}
+
+.k {
+float:left;
+height:38px;
 margin:0;
-padding:0;
+padding:16px 0 0 0;
+background:url('cell.png') no-repeat top right;
+cursor:pointer;
+font:22px sans-serif;
+color:#fff;
+text-align:center;
+}
+.k0 {
+width:48px;
 background:url('cell.png') no-repeat top right;
 }
+.k0s {
+width:48px;
+background:url('cells.png') no-repeat top right;
+}
+.k6 {
+width:80px;
+background:url('cell.png') no-repeat top right;
+}
+.k2 {
+width:400px;
+background:url('cell.png') no-repeat top right;
+}
+
 .t {
 width:399px;
 margin:12px 0 0 0;
@@ -103,34 +146,4 @@ border:0;
 font:22px sans-serif;
 color:#fff;
 opacity:0.5;
-}
-.b {
-height:54px;
-}
-.k {
-float:left;
-width:80px;
-height:38px;
-margin:0;
-padding:16px 0 0 0;
-background:url('cell.png') no-repeat top right;
-cursor:pointer;
-font:22px sans-serif;
-color:#fff;
-text-align:center;
-}
-.j {
-float:left;
-width:48px;
-height:38px;
-margin:0;
-padding:16px 0 0 0;
-background:url('cell.png') no-repeat top right;
-cursor:pointer;
-font:22px sans-serif;
-color:#fff;
-text-align:center;
-}
-.s {
-background:url('cells.png') no-repeat top right;
 }

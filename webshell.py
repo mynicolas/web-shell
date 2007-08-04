@@ -3,7 +3,7 @@
 """ WebShell Server """
 """ Released under the GPL 2.0 by Marc S. Ressl """
 
-version = "0.9.5"
+version = "0.9.6"
 
 import array, time, glob, optparse, random, re
 import socket, os, sys, pty, signal, select, gzip
@@ -1038,8 +1038,8 @@ class Multiplex:
 		self.env_term = env_term
 		# Synchronize methods
 		self.lock = threading.RLock()
-		for name in ['proc_keepalive', 'proc_spawn', 'proc_kill',
-			'proc_read', 'proc_write', 'proc_dump']:
+		for name in ['proc_keepalive', 'proc_buryall',
+			'proc_read', 'proc_write', 'proc_dump', 'proc_getalive']:
 			orig = getattr(self, name)
 			setattr(self, name, SynchronizedMethod(self.lock, orig))
 		# Supervisor thread
@@ -1079,10 +1079,12 @@ class Multiplex:
 		else:
 			return False
 	def proc_spawn(self, sid):
+		# Session
+		self.session[sid]['state'] = 'alive'
+		w, h = self.session[sid]['w'], self.session[sid]['h']
+		# Fork new process
 		try:
-			w, h = self.session[sid]['w'], self.session[sid]['h']
-			# Fork new process
-			pid, fd = os.forkpty()
+			pid, fd = pty.fork()
 		except (IOError, OSError):
 			self.session[sid]['state'] = 'dead'
 			return False
@@ -1116,8 +1118,12 @@ class Multiplex:
 				os.system(cmd)
 			except (IOError, OSError):
 				pass
+#			self.proc_finish(sid)
 			os._exit(0)
 		else:
+			# Store session vars
+			self.session[sid]['pid'] = pid
+			self.session[sid]['fd'] = fd
 			# Set file control
 			fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
 			# Set terminal size
@@ -1129,57 +1135,49 @@ class Multiplex:
 					struct.pack("HHHH", h, w, 0, 0))
 			except (IOError, OSError):
 				pass
-			self.session[sid]['pid'] = pid
-			self.session[sid]['fd'] = fd
-			self.session[sid]['state'] = 'alive'
 			return True
-	def proc_stop(self, sid):
-		# Remove zombie (when process exited on its own)
-		if sid not in self.session:
-			return False
-		elif self.session[sid]['state'] == 'alive':
-			try:
-				os.close(self.session[sid]['fd'])
-			except (IOError, OSError):
-				pass
-			try:
-				os.waitpid(self.session[sid]['pid'], 0)
-			except (IOError, OSError):
-				pass
-			del self.session[sid]['fd']
-			del self.session[sid]['pid']
+	def proc_waitfordeath(self, sid):
+		try:
+			os.close(self.session[sid]['fd'])
+		except (KeyError, IOError, OSError):
+			pass
+		del self.session[sid]['fd']
+		try:
+			os.waitpid(self.session[sid]['pid'], 0)
+		except (KeyError, IOError, OSError):
+			pass
+		del self.session[sid]['pid']
 		self.session[sid]['state'] = 'dead'
 		return True
-	def proc_kill(self, sid):
-		# Kill process and session
-		if sid not in self.session:
-			return False
-		elif self.session[sid]['state'] == 'alive':
-			try:
-				os.close(self.session[sid]['fd'])
-			except (IOError, OSError):
-				pass
+	def proc_bury(self, sid):
+		if self.session[sid]['state'] == 'alive':
 			try:
 				os.kill(self.session[sid]['pid'], signal.SIGTERM)
-				os.waitpid(self.session[sid]['pid'], 0)
 			except (IOError, OSError):
 				pass
+		self.proc_waitfordeath(sid)
 		del self.session[sid]
 		return True
+	def proc_buryall(self):
+		for sid in self.session.keys():
+			self.proc_bury(sid)
+			
+	# Read from process
 	def proc_read(self, sid):
-		# Read from process
 		if sid not in self.session:
 			return False
-		elif self.session[sid]['state'] == 'dead':
+		elif self.session[sid]['state'] != 'alive':
 			return False
-		fd = self.session[sid]['fd']
 		try:
+			fd = self.session[sid]['fd']
 			d = os.read(fd, 65536)
 			if not d:
 				# Process finished, BSD
+				self.proc_waitfordeath(sid)
 				return False
 		except (IOError, OSError):
 			# Process finished, Linux
+			self.proc_waitfordeath(sid)
 			return False
 		term = self.session[sid]['term']
 		term.write(d)
@@ -1191,11 +1189,11 @@ class Multiplex:
 			except (IOError, OSError):
 				return False
 		return True
+	# Write to process
 	def proc_write(self, sid, d):
-		# Write to process
 		if sid not in self.session:
 			return False
-		elif self.session[sid]['state'] == 'dead':
+		elif self.session[sid]['state'] != 'alive':
 			return False
 		try:
 			term = self.session[sid]['term']
@@ -1205,37 +1203,41 @@ class Multiplex:
 		except (IOError, OSError):
 			return False
 		return True
+	# Dump terminal output
 	def proc_dump(self, sid):
 		if sid not in self.session:
 			return False
 		return self.session[sid]['term'].dump()
+		
+	# Get alive sessions, bury timed out ones
+	def proc_getalive(self):
+		fds = []
+		fd2sid = {}
+		now = time.time()
+		for sid in self.session.keys():
+			then = self.session[sid]['time']
+			if (now - then) > 60:
+				self.proc_bury(sid)
+			else:
+				if self.session[sid]['state'] == 'alive':
+					fds.append(self.session[sid]['fd'])
+					fd2sid[self.session[sid]['fd']] = sid
+		return (fds, fd2sid)
+	# Supervisor thread
 	def proc_thread(self):
 		while not self.signal_stop:
-			# Process management
-			now = time.time()
-			fds = []
-			fd2sid = {}
-			for sid in self.session.keys():
-				then = self.session[sid]['time']
-				if (now - then) > 60:
-					self.proc_kill(sid)
-				else:
-					if self.session[sid]['state'] == 'alive':
-						fds.append(self.session[sid]['fd'])
-						fd2sid[self.session[sid]['fd']] = sid
 			# Read fds
+			(fds, fd2sid) = self.proc_getalive()
 			try:
 				i, o, e = select.select(fds, [], [], 1.0)
 			except (IOError, OSError):
 				i = []
 			for fd in i:
 				sid = fd2sid[fd]
-				if not self.proc_read(sid):
-					self.proc_stop(sid)
+				self.proc_read(sid)
 			if len(i):
 				time.sleep(0.002)
-		for sid in self.session.keys():
-			self.proc_kill(sid)
+		self.proc_buryall()
 
 class WebShellRequestHandler(BaseHTTPRequestHandler):
 	def setup(self):

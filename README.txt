@@ -1,5 +1,5 @@
 --------------------------------------------------------------------
-WebShell 0.9.5
+WebShell 0.9.6
 (C) 2007 by Marc S. Ressl
 Released under the GPL 2.0
 http://www-personal.umich.edu/~mressl/webshell
