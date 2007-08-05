@@ -1,5 +1,5 @@
 webshell={};
-webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
+webshell.TerminalClass=function(id,width,height,handler) {
 	var ie=0;
 	if(window.ActiveXObject)
 		ie=1;
@@ -11,6 +11,7 @@ webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
 	var qtimer;
 	var qtime=100;
 	var retry=0;
+	var cy=0;
 	var div=document.getElementById(id);
 
 	function update() {
@@ -33,13 +34,15 @@ webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
 				islocked=false;
 				if (!isactive) {
 					isactive=true;
-					onconnect();
+					handler('conn',0);
 				}
 				if(r.status==200) {
 					retry=0;
-					html=r.responseText.substring(38);
+					cy=r.responseText.substring(45,48);
+					html=r.responseText.substring(52);
 					if(html.length>0) {
 						div.innerHTML=html;
+						handler('curs',cy);
 						qtime=100;
 					} else {
 						qtime*=2;
@@ -48,13 +51,13 @@ webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
 					}
 					qtimer=window.setTimeout(update,qtime);
 				} else if (r.status==400)
-					ondisconnect();
+					handler('disc',0);
 				else {
 					retry++;
 					if (retry<3)
 						qtimer=window.setTimeout(update,2000);
 					else
-						ondisconnect();
+						handler('disc',1);
 				}
 			}
 			r.send(null);
@@ -174,6 +177,6 @@ webshell.TerminalClass=function(id,width,height,onconnect,ondisconnect) {
 	}
 	qtimer=window.setTimeout(update,1);
 }
-webshell.Terminal=function(id,width,height,onconnect,ondisconnect) {
-	return new this.TerminalClass(id,width,height,onconnect,ondisconnect);
+webshell.Terminal=function(id,width,height,handler) {
+	return new this.TerminalClass(id,width,height,handler);
 }

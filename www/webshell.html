@@ -8,9 +8,11 @@
 <script type="text/javascript" src="webshell.js"></script>
 <script type="text/javascript"><!--
 var t;
-var lo=1;
+var curr_overlay=0;
+var sel_overlay=1;
+var cy=0;
 window.onload=function() {
-	t=webshell.Terminal("term",80,24,onconnect,ondisconnect);
+	t=webshell.Terminal("term",80,24,handler);
 	document.onkeypress=t.keypress;
 	document.onkeydown=t.keydown; 
 	setTimeout(function(){window.scrollTo(0, 1);}, 100);
@@ -19,13 +21,17 @@ window.onload=function() {
 window.onselectstart=function() {return false;};
 // Set overlay
 function so(value) {
-	for(var i=0;i<9;i++)
+	curr_overlay=value;
+	if (value>0)
+		sel_overlay=value;
+	scroll(cy);
+	for(var i=0;i<10;i++)
 		document.getElementById("ol"+i).style.display=(value == i)?'block':'none';
 	var term=document.getElementById("term");
 	if(value<0) {
 		document.onkeypress=t.keypress;
 		document.onkeydown=t.keydown;
-		term.onclick=function(){so(lo);};
+		term.onclick=function(){so(sel_overlay);};
 		term.style.cursor="pointer";
 	} else {
 		document.onkeypress=null;
@@ -33,8 +39,6 @@ function so(value) {
 		term.onclick=null;
 		term.style.cursor=null;
 	}
-	if (value>0)
-		lo=value;
 	if (value==1)
 		document.getElementById("t").focus();
 }
@@ -60,12 +64,28 @@ function sh(value) {
 	sk(value);
 	so(-1);
 }
-// Handlers
-function onconnect() {
-	startMsgAnim('Tap for keyboard',800,false);
+// Set scroll
+function scroll() {
+	var div=document.getElementById("term");
+	var sp=0;
+	if((curr_overlay>0) && (cy>7))
+		sp=((7-cy)*11)+"px";
+	div.style.top=sp;
 }
-function ondisconnect() {
-	startMsgAnim('Disconnected',0,true);
+// Handler
+function handler(msg,value) {
+	switch(msg) {
+	case 'conn':
+		startMsgAnim('Tap for keyboard',800,false);
+		break;
+	case 'disc':
+		startMsgAnim('Disconnected',0,true);
+		break;
+	case 'curs':
+		cy=value;
+		scroll(cy);
+		break;
+	}
 }
 // Animate box
 var msgAnim={timer:null,up:false,duration:300,start:null};
@@ -109,7 +129,7 @@ function endMsgAnim () {
 <body>
 <div class="container">
 
-<div id="term"></div>
+<pre id="term"></pre>
 
 <div id="ol0" class="olAlert"></div>
 
@@ -146,7 +166,6 @@ function endMsgAnim () {
 </div>
 </div>
 <div class="kd"></div>
-<div class="kd"></div>
 <div class="kd">
 <div class="k k6" onClick="sk(27)">esc</div>
 <div class="k k6" onClick="sk(63273)">home</div>
@@ -177,7 +196,6 @@ function endMsgAnim () {
 <div class="h h3" onClick="so(6)">Fn</div>
 </div>
 </div>
-<div class="kd"></div>
 <div class="kd">
 <div class="k k0" onClick="sk(113)">q</div>
 <div class="k k0" onClick="sk(119)">w</div>
@@ -228,7 +246,6 @@ function endMsgAnim () {
 <div class="h h3" onClick="so(6)">Fn</div>
 </div>
 </div>
-<div class="kd"></div>
 <div class="kd">
 <div class="k k0" onClick="sk(81)">Q</div>
 <div class="k k0" onClick="sk(87)">W</div>
@@ -279,7 +296,6 @@ function endMsgAnim () {
 <div class="h h3" onClick="so(6)">Fn</div>
 </div>
 </div>
-<div class="kd"></div>
 <div class="kd">
 <div class="k k0" onClick="sk(49)">1</div>
 <div class="k k0" onClick="sk(50)">2</div>
@@ -330,7 +346,6 @@ function endMsgAnim () {
 <div class="h h3" onClick="so(6)">Fn</div>
 </div>
 </div>
-<div class="kd"></div>
 <div class="kd">
 <div class="k k0" onClick="sk(91)">[</div>
 <div class="k k0" onClick="sk(93)">]</div>
@@ -381,7 +396,6 @@ function endMsgAnim () {
 <div class="h h3" onClick="so(6)">Fn</div>
 </div>
 </div>
-<div class="kd"></div>
 <div class="kd">
 <div class="k k0" onClick="sk(17)">^Q</div>
 <div class="k k0" onClick="sk(23)">^W</div>
@@ -404,10 +418,10 @@ function endMsgAnim () {
 <div class="k k0" onClick="sk(10)">^J</div>
 <div class="k k0" onClick="sk(11)">^K</div>
 <div class="k k0" onClick="sk(12)">^L</div>
-<div class="k k0" onClick="sk(29)">^]</div>
+<div class="k k0" onClick="sk(13)"><img src="enter.png" alt="en"></div>
 </div>
 <div class="kd">
-<div class="k k0" onClick="sk(28)">^\</div>
+<div class="k k0" onClick="so(9)"><img src="shift.png" alt="sh"></div>
 <div class="k k0" onClick="sk(26)">^Z</div>
 <div class="k k0" onClick="sk(24)">^X</div>
 <div class="k k0" onClick="sk(3)">^C</div>
@@ -415,15 +429,61 @@ function endMsgAnim () {
 <div class="k k0" onClick="sk(2)">^B</div>
 <div class="k k0" onClick="sk(14)">^N</div>
 <div class="k k0" onClick="sk(13)">^M</div>
-<div class="k k0" onClick="sk(30)">^^</div>
-<div class="k k0" onClick="sk(31)">^_</div>
+<div class="k k0" onClick="sk(32)">sp</div>
+<div class="k k0" onClick="sk(127)"><img src="delete.png" alt="bs"></div>
 </div>
 </div>
 
-<!--
-<div class="k k6" onClick="sb(0)">^@</div>
-<div class="k k6" onClick="sk(63302)">ins</div>
--->
+<div id="ol9" class="olCtrl">
+<div class="hd">
+<div class="h hb" onclick="so(-1)">Back</div>
+<div class="hr">
+<div class="h h1" onClick="so(1)">Text</div>
+<div class="h h2" onClick="so(2)">Nav</div>
+<div class="h h2" onClick="so(3)">ABC</div>
+<div class="h h2" onClick="so(4)">.?123</div>
+<div class="h h2s" onClick="so(5)">Ctrl</div>
+<div class="h h3" onClick="so(6)">Fn</div>
+</div>
+</div>
+<div class="kd">
+<div class="k k0" onClick="sk(0)">^@</div>
+<div class="k k0" onClick="sk(28)">^\</div>
+<div class="k k0" onClick="sk(29)">^]</div>
+<div class="k k0" onClick="sk(30)">^^</div>
+<div class="k k0" onClick="sk(31)">^_</div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+</div>
+<div class="kd">
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0" onClick="sk(13)"><img src="enter.png" alt="en"></div>
+</div>
+<div class="kd">
+<div class="k k0s" onClick="so(5)"><img src="shift.png" alt="sh"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0"></div>
+<div class="k k0" onClick="sk(32)">sp</div>
+<div class="k k0" onClick="sk(127)"><img src="delete.png" alt="bs"></div>
+</div>
+</div>
+
 <div id="ol6" class="olCtrl">
 <div class="hd">
 <div class="h hb" onclick="so(-1)">Back</div>
@@ -436,7 +496,6 @@ function endMsgAnim () {
 <div class="h h3s" onClick="so(6)">Fn</div>
 </div>
 </div>
-<div class="kd"></div>
 <div class="kd"></div>
 <div class="kd">
 <div class="k k6" onClick="sk(63236)">F1</div>

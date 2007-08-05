@@ -766,7 +766,7 @@ class Terminal:
 		elif p[0] == '6':
 			x = self.cx + 1
 			y = self.cy + 1
-			self.vt100_out = '\x1b[%d;%dR'%(y, x)	
+			self.vt100_out = '\x1b[%d;%dR' % (y, x)	
 		elif p[0] == '7':
 			self.vt100_out = 'WebShell'
 		elif p[0] == '8':
@@ -774,7 +774,7 @@ class Terminal:
 		elif p[0] == '?6':
 			x = self.cx + 1
 			y = self.cy + 1
-			self.vt100_out = '\x1b[?%d;%dR'%(y, x)	
+			self.vt100_out = '\x1b[?%d;%dR' % (y, x)	
 		elif p[0] == '?15':
 			self.vt100_out = '\x1b[?13n'
 		elif p[0] == '?25':
@@ -989,7 +989,7 @@ class Terminal:
 						ul = ' ul'
 					else:
 						ul = ''
-					dump += u'<span class="f%x b%x%s">'%(fg, bg, ul)
+					dump += u'<span class="f%x b%x%s">' % (fg, bg, ul)
 					attr_ = attr
 				# Escape HTML characters
 				if char == 38:
@@ -1011,7 +1011,7 @@ class Terminal:
 			return ''
 		else:
 			self.dump_cache = dump
-			return '<pre class="term">' + dump + '</pre>'
+			return '<c cy="%03d" />' % cy + dump
 
 class SynchronizedMethod:
 	def __init__(self, lock, orig):

@@ -11,56 +11,51 @@ width:480px;
 }
 
 #term {
+position:absolute;
 margin:0;
 padding:0;
-overflow:hidden;
-background:#000 url('background.jpg');
 minimum-height:264px;
-}
-
-pre.term {
-display:block;
-margin:0;
-padding:0;
 font:10px Andale Mono, monospace;
 white-space:pre;
+background:#000 url('background.jpg');
 }
 
-pre.term span.ul { text-decoration: underline; }
+span.ul { text-decoration: underline; }
 
-pre.term span.f0 { color: #000000; }
-pre.term span.f1 { color: #c00006; }
-pre.term span.f2 { color: #1bc806; }
-pre.term span.f3 { color: #c3c609; }
-pre.term span.f4 { color: #0000c2; }
-pre.term span.f5 { color: #bf00c2; }
-pre.term span.f6 { color: #19c4c2; }
-pre.term span.f7 { color: #f2f2f2; }
-pre.term span.fc { color: transparent; }	/* Concealed */
-pre.term span.fe { color: #000000; }		/* Negative fg */
-pre.term span.ff { color: #ffffff; }		/* Default fg */
+span.f0 { color: #000000; }
+span.f1 { color: #c00006; }
+span.f2 { color: #1bc806; }
+span.f3 { color: #c3c609; }
+span.f4 { color: #0000c2; }
+span.f5 { color: #bf00c2; }
+span.f6 { color: #19c4c2; }
+span.f7 { color: #f2f2f2; }
+span.fc { color: transparent; }	/* Concealed */
+span.fe { color: #000000; }		/* Negative fg */
+span.ff { color: #ffffff; }		/* Default fg */
 
-pre.term span.b0 { background-color: #000000; }
-pre.term span.b1 { background-color: #cc2300; }
-pre.term span.b2 { background-color: #00cc00; }
-pre.term span.b3 { background-color: #cccc00; }
-pre.term span.b4 { background-color: #0e2acc; }
-pre.term span.b5 { background-color: #cc34cc; }
-pre.term span.b6 { background-color: #00cccc; }
-pre.term span.b7 { background-color: #f5f5f5; }
-pre.term span.bc { background-color: #555555; }		/* Cursor */
-pre.term span.be { background-color: transparent; }	/* Default bg */
-pre.term span.bf { background-color: #ffffff; }		/* Negative bg */
+span.b0 { background-color: #000000; }
+span.b1 { background-color: #cc2300; }
+span.b2 { background-color: #00cc00; }
+span.b3 { background-color: #cccc00; }
+span.b4 { background-color: #0e2acc; }
+span.b5 { background-color: #cc34cc; }
+span.b6 { background-color: #00cccc; }
+span.b7 { background-color: #f5f5f5; }
+span.bc { background-color: #555555; }		/* Cursor */
+span.be { background-color: transparent; }	/* Default bg */
+span.bf { background-color: #ffffff; }		/* Negative bg */
 
 .olCtrl {
 display:none;
-position:relative;
-margin:-264px 0 0 0;
+position:absolute;
+top:0px;
 }
 .olAlert {
 display:none;
-position:relative;
-margin:-186px 0 0 110px;
+position:absolute;
+top:0px;
+margin:78px 0 0 110px;
 width:260px;
 height:66px;
 padding:42px 0 0px 0;
@@ -72,7 +67,8 @@ opacity:0.7;
 }
 
 .hd {
-height:48px;
+width:480px;
+height:102px;
 }
 .h {
 float:left;
