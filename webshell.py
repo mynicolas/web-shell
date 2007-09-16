@@ -1301,8 +1301,8 @@ class WebShellRequestHandler(BaseHTTPRequestHandler):
 		pass
 
 class SecureHTTPServer(HTTPServer):
-	def __init__(self, server_address, HandlerClass, cmd=None, env_term=None, ssl_enabled=True, ssl_cert=None):
-		BaseServer.__init__(self, server_address, HandlerClass)
+ 	def __init__(self, server_address, HandlerClass, cmd=None, env_term=None, ssl_enabled=True, ssl_cert=None, www_dir='www'):
+  		BaseServer.__init__(self, server_address, HandlerClass)
 		# Setup SSL
 		if ssl_enabled:
 			try:
@@ -1320,7 +1320,7 @@ class SecureHTTPServer(HTTPServer):
 		# Setup webshell multiplex
 		self.webshell_files = {}
 		for i in ['css', 'html', 'js', 'gif', 'jpg', 'png']:
-			for j in glob.glob('www/*.%s' % i):
+			for j in glob.glob(www_dir + '/*.%s' % i):
 				self.webshell_files[os.path.basename(j)] = file(j).read()
 		self.webshell_mime = mimetypes.types_map.copy()
 		self.webshell_multiplex = Multiplex(cmd, env_term)
@@ -1358,6 +1358,8 @@ def main():
 		help = "disable SSL, set listen interface to localhost")
 	parser.add_option("--ssl-cert", dest = "ssl_cert", default = "webshell.pem",
 		help = "set SSL certificate file (default: webshell.pem)")
+ 	parser.add_option("--www-dir", dest = "www_dir", default = "www",
+		help = "set WebShell www path (default: www)")
 	(o, a) = parser.parse_args()
 	if o.version:
 		print 'WebShell ' + version
@@ -1400,7 +1402,7 @@ def main():
 	# Run server
 	try:
 		server_address = (o.interface, o.port)
-		httpd = SecureHTTPServer(server_address, WebShellRequestHandler, o.cmd, o.term, o.ssl_enabled, o.ssl_cert)
+		httpd = SecureHTTPServer(server_address, WebShellRequestHandler, o.cmd, o.term, o.ssl_enabled, o.ssl_cert, o.www_dir)
 		if httpd.socket is None:
 			print 'There is a problem with OpenSSL. Make sure the certificates\' path and content are correct.'
 			sys.exit(0)
