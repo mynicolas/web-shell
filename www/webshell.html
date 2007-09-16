@@ -22,7 +22,8 @@ window.onload=function() {
 window.onselectstart=function() {return false;};
 // Toggle scroll
 function ts() {
-	scroll=!scroll;
+	is_scroll=!is_scroll;
+	so(sel_overlay);
 }
 // Set overlay
 function so(value) {
@@ -75,6 +76,8 @@ function scroll() {
 	var sp=0;
 	if((curr_overlay>0) && (cy>4))
 		sp=((4-cy)*11)+"px";
+	if (!is_scroll)
+		sp=0;
 	div.style.top=sp;
 }
 // Handler
