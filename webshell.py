@@ -1141,12 +1141,16 @@ class Multiplex:
 			os.close(self.session[sid]['fd'])
 		except (KeyError, IOError, OSError):
 			pass
-		del self.session[sid]['fd']
+		if sid in self.session:
+			if 'fd' in self.session[sid]:
+				del self.session[sid]['fd']
 		try:
 			os.waitpid(self.session[sid]['pid'], 0)
 		except (KeyError, IOError, OSError):
 			pass
-		del self.session[sid]['pid']
+		if sid in self.session:
+			if 'pid' in self.session[sid]:
+				del self.session[sid]['pid']
 		self.session[sid]['state'] = 'dead'
 		return True
 	def proc_bury(self, sid):
@@ -1156,7 +1160,8 @@ class Multiplex:
 			except (IOError, OSError):
 				pass
 		self.proc_waitfordeath(sid)
-		del self.session[sid]
+		if sid in self.session:
+			del self.session[sid]
 		return True
 	def proc_buryall(self):
 		for sid in self.session.keys():
